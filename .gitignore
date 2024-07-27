@@ -1,0 +1,16 @@
+# Transpiled source-code directory
+dist/
+
+# Dependency directories
+node_modules
+.husky/*
+!.husky/pre-commit
+.eslintcache
+._eslint.config.js
+
+# Environment & configs
+package-lock.json
+*.env
+
+# Personal notes
+Docs/
