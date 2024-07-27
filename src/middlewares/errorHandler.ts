@@ -15,7 +15,6 @@ class BaseError extends Error {
       err.message = `BaseError - ${err.message} - ${message}`;
     }
     super(err.message);
-    err.stack = message ? err.stack : new Error().stack;
     Object.keys(err).forEach(key => (this[key] = err[key]));
     this.name = this.constructor.name; // to make err instanceof BaseError
   }
@@ -52,14 +51,16 @@ class BaseError extends Error {
 
     if (err instanceof BaseError) {
       errObj.status = err.status;
-      errObj.userMessage = err.userMessage;
+      if (err.userMessage) {
+        errObj.userMessage = err.userMessage;
+      }
     }
 
     LOGGER.error(JSON.stringify(errObj, null, 2));
     if (process.env.NODE_ENV === 'production') {
-      errObj.stack = null;
-      errObj.message = null;
-      errObj.debug = null;
+      delete errObj.stack;
+      delete errObj.message;
+      delete errObj.debug;
     }
     res.status(errObj.status).json(errObj);
   };

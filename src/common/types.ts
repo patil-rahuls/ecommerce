@@ -11,5 +11,6 @@ declare module 'express-session' {
     ct: string; // csrf token
     at: string; // auth token
     rt: string; // refresh token
+    preSessionId?: string;
   }
 }

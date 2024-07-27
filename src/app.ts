@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser';
 // import cookieParser from 'cookie-parser';
 import express from 'express';
+import session from 'express-session';
 import helmet from 'helmet';
 import './config/dotenv.js';
 import { LOGGER } from './middlewares/logger.js';
@@ -45,6 +46,28 @@ class App {
         },
         // X-Content-Type-Options: nosniff - bydefault
         xFrameOptions: { action: 'deny' }
+      })
+    );
+    this.app.use(
+      session({
+        // Session ID cookie config.
+        name: 'curlihairs',
+        secret: process.env.SESSION_SECRET, // used to sign the session ID cookie.
+        resave: false, // save changes to the store on every request.
+        saveUninitialized: false,
+        // store: new RedisStore({
+        //   host: 'localhost',
+        //   port: 0000,
+        //   client: '',
+        //   user: '',
+        //   password: ''
+        // }),
+        cookie: {
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          sameSite: 'strict',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production' ? true : false
+        }
       })
     );
     LOGGER.info(`Initialized middlewares.`);

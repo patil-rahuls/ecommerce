@@ -28,8 +28,11 @@ export const ERROR_CODES = {
   // Login
   ERR_LOGINFORM: {
     status: 500,
-    message: `Login form could not be loaded`,
-    userMessage: INVALID_MOBILE_STR
+    message: `Login form could not be loaded`
+  },
+  ERR_LOGINFORM_UNAUTHORIZED: {
+    status: 500,
+    message: `Login form attempted without authorization/preSessionId`
   },
 
   // DB

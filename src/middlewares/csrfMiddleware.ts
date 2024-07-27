@@ -5,8 +5,10 @@ export default {
   setCsrfToken() {
     return async function (req: Request, res: Response, next: NextFunction) {
       try {
-        const ct = randomBytes(36).toString('base64');
-        req.session.ct = ct;
+        // Tie the CSRF token with the session
+        req.session.ct = randomBytes(36).toString('base64');
+        // Set CSRF token in a response cookie
+        res.cookie('ct', req.session.ct, { sameSite: 'strict', maxAge: 5 * 60 * 1000 });
       } catch (err) {
         next(err);
       }

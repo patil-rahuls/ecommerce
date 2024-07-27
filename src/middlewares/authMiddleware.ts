@@ -10,21 +10,46 @@ class AuthMiddleware {
 
   public async loginForm(req: Request, res: Response, next: NextFunction) {
     try {
-      res.cookie('ct', req.session.ct);
+      // Prevent [GET /user/login] from being accessed directly, as this returns the CSRF token.
+      // User needs to first visit home page or any product page before he can access the login form, as there is no login page.
+      // This is because, the login form will be presented only when user clicks on the "Login" btn on the header.
+      // And for this, user must browse some page first, possibly the home page OR any other product page, so that
+      // the pre-session id is set in `req.session.preSessionId` on browsing that page.
+      if (!req.session.preSessionId) {
+        throw new BaseError(`ERR_LOGINFORM_UNAUTHORIZED`);
+      }
+
+      // res.json(req.session.id);
+      req.session.user.mobile = 973986823;
+      res.json(req.session);
       LOGGER.info(JSON.stringify(req.session));
       LOGGER.info(req.session.id);
-      res.json({
-        status: res.statusCode,
-        auth_token: 'auth_token',
-        userMessage: `We've just sent an OTP to your mobile number. Please use it to log in!`
-      });
+      // res.json({
+      //   status: res.statusCode,
+      //   auth_token: 'auth_token',
+      //   userMessage: `We've just sent an OTP to your mobile number. Please use it to log in!`
+      // });
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
+      } else {
+        // next(error); // tested
+        next(new BaseError(`ERR_LOGINFORM`));
       }
-      // next(error); // tested
-      next(new BaseError(`ERR_LOGINFORM`));
     }
+  }
+
+  public async logout(req: Request, res: Response, next: NextFunction) {
+    req.session.destroy(err => {
+      if (err) {
+        next(new BaseError(`ERR_LOGOUT`));
+      }
+    });
+    LOGGER.info(`Logged out.`);
+    res.json({
+      status: res.statusCode,
+      userMessage: `You're now logged out! See you soon!`
+    });
   }
 
   // Method to handle both registration and login
@@ -131,19 +156,6 @@ class AuthMiddleware {
 
   private getToken(payload, options: { expiresIn: string } = { expiresIn: '5m' }) {
     return jwt.sign(payload, process.env.JWT_SECRET, options);
-  }
-
-  public async logout(req: Request, res: Response, next: NextFunction) {
-    req.session.destroy(err => {
-      if (err) {
-        next(new BaseError(`ERR_LOGOUT`));
-      }
-    });
-    LOGGER.info(`Logged out.`);
-    res.json({
-      status: res.statusCode,
-      userMessage: `You're now logged out!`
-    });
   }
 
   private async getUser(mobile, dbConn) {
