@@ -13,7 +13,7 @@ module.exports = {
   },
   root: true,
   rules: {
-    'no-unused-vars': 'warn',
+    'no-unused-vars': 'error',
     'no-undef': 'warn',
     semi: 'error',
     'prefer-const': 'error',

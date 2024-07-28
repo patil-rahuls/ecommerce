@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { LOGGER } from './logger.js';
-import { ERROR_CODES, GENERIC_ERR_STR } from '../common/errorCodes.js';
+import { LOGGER } from '../common/logger.js';
+import { ERROR_CODES, GENERIC_ERR_STR } from '../common/error-codes.js';
 
 class BaseError extends Error {
   public debug;

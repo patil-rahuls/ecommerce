@@ -1,8 +1,8 @@
 import './dotenv.js';
 import db, { Pool } from 'mysql2/promise';
-import { LOGGER } from '../middlewares/logger.js';
+import { LOGGER } from '../common/logger.js';
 import { DBInstance } from '../common/types.js';
-import { BaseError } from '../middlewares/errorHandler.js';
+import { BaseError } from '../middlewares/error-middleware.js';
 
 abstract class DB {
   // private constructor() {}

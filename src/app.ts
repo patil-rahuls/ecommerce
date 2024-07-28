@@ -1,11 +1,10 @@
 import bodyParser from 'body-parser';
-// import cookieParser from 'cookie-parser';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import './config/dotenv.js';
-import { LOGGER } from './middlewares/logger.js';
-import { BaseError } from './middlewares/errorHandler.js';
+import { LOGGER } from './common/logger.js';
+import { BaseError } from './middlewares/error-middleware.js';
 import { Controller } from './common/interfaces/controller.js';
 
 class App {
@@ -23,7 +22,6 @@ class App {
   private initializeMiddlewares() {
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: false })); // IMP - these should be written before all the routes.
-    // this.app.use(cookieParser());
     this.app.use(
       helmet({
         contentSecurityPolicy: {
@@ -50,8 +48,8 @@ class App {
     );
     this.app.use(
       session({
-        // Session ID cookie config.
-        name: 'curlihairs',
+        // Session cookie config.
+        name: 'satr_id', // hindi translation of the word 'session'
         secret: process.env.SESSION_SECRET, // used to sign the session ID cookie.
         resave: false, // save changes to the store on every request.
         saveUninitialized: false,
@@ -70,6 +68,7 @@ class App {
         }
       })
     );
+    this.app.use(express.static('public'));
     LOGGER.info(`Initialized middlewares.`);
   }
 

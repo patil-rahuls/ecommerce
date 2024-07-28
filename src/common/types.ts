@@ -4,6 +4,7 @@ export type DBInstance = 'READ' | 'WRITE';
 export type Gender = 'Male' | 'Female';
 export type AddressType = 'Home' | 'Work';
 declare module 'express-session' {
+  // eslint-disable-next-line no-unused-vars
   interface SessionData {
     user: User;
     authenticated: boolean;

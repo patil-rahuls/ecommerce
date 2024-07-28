@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 // import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
 import { User } from '../common/interfaces/user.js';
-import { LOGGER } from './logger.js';
-import { BaseError } from './errorHandler.js';
+// import { LOGGER } from '../common/logger.js';
+import { BaseError } from '../middlewares/error-middleware.js';
 
 class AuthMiddleware {
   private user: User;
@@ -20,10 +20,10 @@ class AuthMiddleware {
       }
 
       // res.json(req.session.id);
-      req.session.user.mobile = 973986823;
-      res.json(req.session);
-      LOGGER.info(JSON.stringify(req.session));
-      LOGGER.info(req.session.id);
+      // req.session.user.mobile = 973986823;
+      // res.json(req.session);
+      // LOGGER.info(JSON.stringify(req.session));
+      // LOGGER.info(req.session.id);
       // res.json({
       //   status: res.statusCode,
       //   auth_token: 'auth_token',
@@ -40,16 +40,33 @@ class AuthMiddleware {
   }
 
   public async logout(req: Request, res: Response, next: NextFunction) {
-    req.session.destroy(err => {
-      if (err) {
-        next(new BaseError(`ERR_LOGOUT`));
-      }
-    });
-    LOGGER.info(`Logged out.`);
-    res.json({
-      status: res.statusCode,
-      userMessage: `You're now logged out! See you soon!`
-    });
+    try {
+      req.session.destroy(error => {
+        if (error) {
+          next(new BaseError(`ERR_LOGOUT`));
+        }
+      });
+      // an attempt to delete the session and other cookies from client's browser by expiring them.
+      res.cookie('connect.sid', null, {
+        expires: new Date('Thu, 01 Jan 1970 00:00:00 UTC'),
+        httpOnly: true
+      });
+      res.cookie('satr_id', null, {
+        expires: new Date('Thu, 01 Jan 1970 00:00:00 UTC'),
+        httpOnly: true
+      });
+      res.cookie('ct', null, {
+        expires: new Date('Thu, 01 Jan 1970 00:00:00 UTC'),
+        httpOnly: false
+      });
+      res.cookie('at', null, {
+        expires: new Date('Thu, 01 Jan 1970 00:00:00 UTC'),
+        httpOnly: false
+      });
+      res.redirect('/');
+    } catch (error) {
+      next(new BaseError(`ERR_LOGOUT`, error.message));
+    }
   }
 
   // Method to handle both registration and login

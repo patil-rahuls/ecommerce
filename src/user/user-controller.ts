@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { Controller } from '../common/interfaces/controller.js';
-import { AuthMiddleware } from '../middlewares/authMiddleware.js';
-import CSRF from '../middlewares/csrfMiddleware.js';
+import { AuthMiddleware } from './user-auth-middleware.js';
+import CSRF from '../middlewares/csrf-middleware.js';
 
 class UserController implements Controller {
   public path: string;
