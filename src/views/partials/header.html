@@ -1,0 +1,234 @@
+<header id="nav-menu" aria-label="navigation bar">
+  <div class="container">
+    <div class="nav-start">
+      <a class="logo" href="/">
+        <i class="fa-solid fa-shop" aria-hidden="true"></i>
+        <!-- <img src="" width="35" height="35" alt="Inc Logo" /> -->
+      </a>
+      <form class="search" role="search" onsubmit="event.preventDefault();">
+        <input type="search" name="search" placeholder="Search for Products, Brands and More..." />
+        <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+      </form>
+    </div>
+
+    <div class="nav-end">
+      <div class="right-container">
+        <button class="btn btn-primary" id="login">Login</button>
+        <a href="#cart">
+          <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <span id="cartItemCount"> 5 </span>
+        </a>
+      </div>
+
+      <button id="hamburger" aria-label="hamburger" aria-haspopup="true" aria-expanded="false">
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="meta">
+  <form class="search" role="search" onsubmit="event.preventDefault();">
+    <input type="search" name="search" placeholder="Search for Products, Brands and More..." />
+    <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+  </form>
+  <nav class="menu">
+    <ul class="menu-bar">
+      <li>
+        <button
+          class="nav-link dropdown-btn"
+          data-dropdown="dropdown1"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-label="browse"
+        >
+          Clothing &nbsp;<i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div id="dropdown1" class="dropdown type1">
+          <ul role="menu">
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/botd.svg"
+                  class="icon"
+                />
+                <div>
+                  <span class="dropdown-link-title">Women's Fashion</span>
+                  <p>Western, Traditional, Casual & more...</p>
+                </div>
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/fs.svg"
+                  class="icon"
+                />
+                <div>
+                  <span class="dropdown-link-title">Men's Fashion</span>
+                  <p>Buy 1 Get 1* | Best offers under 999 ...</p>
+                </div>
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/sp.svg"
+                  class="icon"
+                />
+                <div>
+                  <span class="dropdown-link-title">Kid's & newborn wear</span>
+                  <p>Upto 80%-Off | Best offers on combo-buy...</p>
+                </div>
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/cf.svg"
+                  class="icon"
+                />
+                <div>
+                  <span class="dropdown-link-title">Shoes</span>
+                  <p>Men's & Women's shoes collection...</p>
+                </div>
+              </a>
+            </li>
+          </ul>
+
+          <ul role="menu">
+            <li class="dropdown-title">
+              <span class="dropdown-link-title">Popular Brands</span>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/xd.svg"
+                />
+                Levis
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/ae.svg"
+                />
+                Peter-England
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/sketch.svg"
+                />
+                GAP
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/indesign.svg"
+                />
+                Spyker
+              </a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">
+                <img
+                  src="https://raw.githubusercontent.com/Evavic44/responsive-navbar-with-dropdown/main/assets/icons/figma.svg"
+                />
+                FCUK
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <button
+          class="nav-link dropdown-btn"
+          data-dropdown="dropdown2"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-label="discover"
+        >
+          Electronics &nbsp;<i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div id="dropdown2" class="dropdown type2">
+          <ul role="menu">
+            <li>
+              <span class="dropdown-link-title">Mobiles</span>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Motorola</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">iPhone</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Samsung</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">One Plus</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Vivo</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Oppo</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Asus</a>
+            </li>
+          </ul>
+          <ul role="menu">
+            <li>
+              <span class="dropdown-link-title">Smart Watches</span>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Samsung</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">Apple</a>
+            </li>
+            <li role="menuitem">
+              <a class="dropdown-link" href="#">One Plus</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li><a class="nav-link" href="/">Appliances</a></li>
+      <li><a class="nav-link" href="/">Furniture & Home-Decor</a></li>
+      <li><a class="nav-link" href="/">Gifts & Toys</a></li>
+      <li><a class="nav-link" href="/">Books & Stationary</a></li>
+      <li><a class="nav-link" href="/">Offers</a></li>
+    </ul>
+  </nav>
+</div>
+
+<div id="loginForm">
+  <i class="fa fa-close close-loginForm"></i>
+  <br />
+  <h3>Login or Signup</h3>
+  <i class="fa-solid fa-phone input-icon" aria-hidden="true"></i>
+  <input id="loginId" type="text" placeholder="Mobile Number" />
+  <div id="loginIdErr" class="hide">
+    <br />
+  </div>
+  <div id="passwordDiv" class="hide">
+    <i class="fa-solid fa-key input-icon" aria-hidden="true"></i>
+    <input id="password" type="password" placeholder="OTP" />
+  </div>
+  <div id="passwordErr" class="hide">
+    <br />
+  </div>
+  <div id="pwlogin" class="hide">
+    <small>Login using password?</small>
+  </div>
+  <input type="submit" class="btn-primary-solid" value="CONTINUE" />
+  <br />
+  <small
+    >By continuing, I agree to the <a href="#"><strong>Privacy Policy</strong></a> &
+    <a href="#"><strong>Terms & Conditions</strong></a></small
+  >
+</div>
+<div id="loginOverlay"></div>

@@ -20,10 +20,7 @@ class HomeController implements Controller {
     // set preSessionId on session, to tie the login-form csrf token with.
     req.session.preSessionId = req.session.id;
     // OR return home html page.
-    res.json({
-      status: 200,
-      userMessage: `Welcome`
-    });
+    res.render('index');
   }
 }
 
