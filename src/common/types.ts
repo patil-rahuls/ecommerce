@@ -1,4 +1,4 @@
-import { User } from './interfaces/user';
+import { User } from './interfaces/user.js';
 
 export type DBInstance = 'READ' | 'WRITE';
 export type Gender = 'Male' | 'Female';
@@ -13,5 +13,6 @@ declare module 'express-session' {
     at: string; // auth token
     rt: string; // refresh token
     preSessionId?: string;
+    otpTimestamp: any; // timestamp at which otp was sent.
   }
 }

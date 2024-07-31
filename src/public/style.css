@@ -22,7 +22,7 @@ body {
   color: var(--dark-grey);
   letter-spacing: -0.4px;
 }
-.blurOverlay {
+#blurOverlay {
   height: 100%;
   width: 100%;
   position: relative;
@@ -31,6 +31,32 @@ body {
   top: 0;
   left: 0;
   background-color: rgba(0, 0, 0, 0.2);
+}
+#loading {
+  z-index: 99;
+  padding: 20px 40px;
+  background: white;
+  border-radius: 30px;
+}
+.hide {
+  display: none;
+}
+.show {
+  display: block;
+}
+.show-inline {
+  display: inline-block;
+}
+.show-flex {
+  display: flex;
+}
+.screenCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translateX(-50%) translateY(-50%);
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
 }
 ul {
   list-style: none;
@@ -233,12 +259,7 @@ button {
 
 /* Login */
 #loginForm {
-  display: none;
   width: 40vw;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   background: snow;
   text-align: center;
   z-index: 9999;
@@ -274,7 +295,6 @@ button {
 }
 #loginForm .err {
   color: crimson;
-  display: block;
 }
 
 @media (max-width: 1100px) {

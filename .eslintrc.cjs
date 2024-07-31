@@ -18,19 +18,19 @@ module.exports = {
     semi: 'error',
     'prefer-const': 'error',
     '@typescript-eslint/await-thenable': 'error',
-    '@typescript-eslint/member-delimiter-style': [
-      'error',
-      {
-        multiline: {
-          delimiter: 'semi',
-          requireLast: true,
-        },
-        singleline: {
-          delimiter: 'semi',
-          requireLast: true,
-        },
-      },
-    ],
+    // '@typescript-eslint/member-delimiter-style': [
+    //   'error',
+    //   {
+    //     multiline: {
+    //       delimiter: 'semi',
+    //       requireLast: true,
+    //     },
+    //     singleline: {
+    //       delimiter: 'semi',
+    //       requireLast: false,
+    //     },
+    //   },
+    // ],
     '@typescript-eslint/naming-convention': [
       'error',
       {
@@ -53,7 +53,7 @@ module.exports = {
     '@typescript-eslint/semi': ['error', 'always'],
     '@typescript-eslint/type-annotation-spacing': 'error',
   
-    'brace-style': ['error', '1tbs'],
+    // 'brace-style': ['error', '2tbs'],
     complexity: 'error',
     curly: 'error',
     'dot-notation': 'off',

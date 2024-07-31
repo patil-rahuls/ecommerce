@@ -1,4 +1,4 @@
-import { AddressType } from '../types';
+import { AddressType } from '../types.js';
 
 interface Address {
   name: string;

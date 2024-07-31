@@ -19,7 +19,6 @@ class HomeController implements Controller {
   private async homePage(req: Request, res: Response) {
     // set preSessionId on session, to tie the login-form csrf token with.
     req.session.preSessionId = req.session.id;
-    // OR return home html page.
     res.render('index');
   }
 }

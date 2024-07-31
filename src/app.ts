@@ -3,11 +3,11 @@ import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import { engine } from 'express-handlebars';
+import path from 'path';
 import './config/dotenv.js';
 import { LOGGER } from './common/logger.js';
 import { BaseError } from './middlewares/error-middleware.js';
 import { Controller } from './common/interfaces/controller.js';
-import path from 'path';
 
 class App {
   public app: express.Application;

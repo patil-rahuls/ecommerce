@@ -11,8 +11,8 @@ interface User {
   defaultBillingAddress?: Address;
   defaultShippingAddress?: Address;
   allAddresses?: Address[];
-  userGroup: string;
-  createdAt: string;
+  userGroup?: string;
+  createdAt?: string;
 }
 
 export { User };

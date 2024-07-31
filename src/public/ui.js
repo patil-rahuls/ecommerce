@@ -1,3 +1,18 @@
+window.fetchHelper = async function (url, method = 'GET', data = '', headers = '') {
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: headers ? headers : { 'Content-Type': 'application/json' },
+      ...(method === 'POST' && { body: JSON.stringify(data) })
+    });
+    return await res.json();
+  } catch (err) {
+    return {
+      status: 500,
+      userMessage: `Something went wrong! Please try again.`
+    };
+  }
+};
 // Navbar
 // Thanks to this - https://www.freecodecamp.org/news/how-to-build-a-responsive-navigation-bar-with-dropdown-menu-using-javascript/
 const hamburgerBtn = document.getElementById('hamburger');
@@ -56,30 +71,45 @@ document.addEventListener('keydown', e => {
     setAriaExpandedFalse();
   }
 });
-// toggle hamburger menu
 
-const loginBtn = document.querySelector(`#login`);
-const loginOverlay = document.querySelector(`#loginOverlay`);
+// ################################################################################################################################
+// ## Popup/Modals ##
+const loading = document.querySelector(`#loading`);
+const blurOverlay = document.querySelector(`#blurOverlay`);
+const closePopup = popupSel => {
+  !popupSel.classList.contains('hide') && popupSel.classList.add('hide');
+  !loading.classList.contains('hide') && loading.classList.add('hide');
+  !blurOverlay.classList.contains('hide') && blurOverlay.classList.add('hide');
+};
+// ## Popup/Modals - LoginForm ##
 const loginForm = document.querySelector(`#loginForm`);
-// Login Popup
-loginBtn.addEventListener('click', () => {
-  loginOverlay.classList.add('blurOverlay');
-  loginForm.style.display = 'block';
-});
-loginOverlay.addEventListener('click', () => {
-  loginForm.style.display = 'none';
-  loginOverlay.classList.remove('blurOverlay');
-});
-document.querySelector(`.close-loginForm`).addEventListener('click', () => {
-  loginForm.style.display = 'none';
-  loginOverlay.classList.remove('blurOverlay');
+const closeLoginForm = () => {
+  closePopup(loginForm);
+};
+blurOverlay.addEventListener('click', closeLoginForm);
+document.querySelector(`.close-loginForm`).addEventListener('click', closeLoginForm);
+document.querySelector(`#login`).addEventListener('click', async () => {
+  blurOverlay.classList.remove('hide');
+  loading.classList.remove('hide');
+  try {
+    const resp = await fetchHelper('/user/login');
+    if (resp.status === 200) {
+      loading.classList.add('hide');
+      loginForm.classList.remove('hide');
+    } else {
+      loading.innerText = 'Something went wrong! Please try again.';
+    }
+  } catch (err) {
+    loading.innerText = 'Something went wrong! Please try again.';
+  }
 });
 
-// Login
+// ################################################################################################################################
+// ## Popup/Modals - LoginForm - CTAs ##
 const continueBtn = document.querySelector(`[value="CONTINUE"]`);
 const setContinueBtnState = (state = '') => {
-  if (!state) {
-    continueBtn.value = 'Login';
+  if (!state || state === 'LOGIN') {
+    continueBtn.value = state || 'CONTINUE';
     continueBtn.style.backgroundColor = 'var(--primary-color)';
     return;
   }
@@ -87,22 +117,18 @@ const setContinueBtnState = (state = '') => {
   continueBtn.style.backgroundColor = 'darkorange';
 };
 const setError = (sel, msg) => {
-  sel.classList.add('err');
   sel.classList.remove('hide');
   sel.innerText = msg;
 };
 const unSetError = sel => {
   sel.classList.add('hide');
-  sel.classList.remove('err');
   sel.innerText = '';
-  sel.disabled = true;
 };
 const loginId = document.querySelector('#loginId');
 const loginIdErr = document.querySelector('#loginIdErr');
 const password = document.querySelector('#password');
 const passwordErr = document.querySelector('#passwordErr');
 const passwordDiv = document.querySelector('#passwordDiv');
-let isUsingPW;
 const isUsingPWSel = document.querySelector(`#pwlogin`);
 isUsingPWSel.addEventListener('click', () => {
   if (isUsingPW) {
@@ -110,20 +136,71 @@ isUsingPWSel.addEventListener('click', () => {
     password.setAttribute('placeholder', 'OTP');
     password.value = '';
     isUsingPW = false;
+    unSetError(passwordErr);
   } else {
     isUsingPWSel.innerHTML = '<small>Login using Password</small>';
     password.setAttribute('placeholder', 'Password');
     password.value = '';
     isUsingPW = true;
+    unSetError(passwordErr);
   }
 });
+const loginErr = (errMsg = '') => {
+  setError(loginIdErr, errMsg || `Couldn't sent OTP. Please try again!`);
+  setContinueBtnState();
+  continueBtn.disabled = false;
+  loginId.disabled = false;
+};
+const login = async () => {
+  password.disabled = true;
+  continueBtn.disabled = true;
+  isUsingPWSel.classList.add('hide');
+  unSetError(passwordErr);
+  setContinueBtnState('Logging in...');
+  try {
+    const ct = document.cookie
+      ?.split('; ')
+      ?.filter(c => /ct=/.test(c))?.[0]
+      ?.split('=')?.[1];
+    const resp = await fetchHelper(
+      '/user/verify',
+      'POST',
+      { userId: loginId.value, passkey: password.value, ct },
+      {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': ct,
+        credentials: 'include'
+      }
+    );
+    switch (resp.status) {
+      case 400:
+      case 422:
+      case 403:
+        loginErr(resp.userMessage);
+        break;
+      case 200:
+        setContinueBtnState('WELCOME !!!');
+        continueBtn.style.backgroundColor = '#34A853';
+        // REFRESH PAGE
+        window.location.reload();
+        break;
+      default:
+        loginErr(resp.userMessage || 'Oops. something went wrong!');
+        break;
+    }
+  } catch (err) {
+    loginErr('Oops. something went wrong!');
+  }
+};
+let isUsingPW;
 continueBtn.addEventListener('click', async () => {
+  blurOverlay.removeEventListener('click', closeLoginForm);
   if (!new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
     setError(loginIdErr, 'Please re-check you mobile number');
     return;
   } else if (!passwordDiv.classList.contains('hide')) {
     if (isUsingPW) {
-      if (password.value?.length > 5) {
+      if (/^[A-Za-z0-9_!@#$^./&+-]*$/.test(password.value) && password.value?.length > 5) {
         await login();
       } else {
         setError(passwordErr, 'Incorrect password');
@@ -133,44 +210,47 @@ continueBtn.addEventListener('click', async () => {
       await login();
     } else {
       setError(passwordErr, 'Incorrect OTP');
-      return;
     }
   } else {
-    // mobile is correct
+    // userId is correct
     unSetError(loginIdErr);
+    loginId.disabled = true;
     setContinueBtnState('Sending OTP...');
     continueBtn.disabled = true;
-    setTimeout(() => {
-      continueBtn.disabled = false;
-      setContinueBtnState();
-      loginId.disabled = true;
-      passwordDiv.classList.remove('hide');
-      isUsingPWSel.classList.remove('hide');
-      isUsingPWSel.style.cursor = 'pointer';
-    }, 3000);
+    try {
+      const ct = document.cookie
+        ?.split('; ')
+        ?.filter(c => /ct=/.test(c))?.[0]
+        ?.split('=')?.[1];
+      const resp = await fetchHelper(
+        '/user/auth',
+        'POST',
+        { userId: loginId.value, ct },
+        {
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': ct,
+          credentials: 'include'
+        }
+      );
+      switch (resp.status) {
+        case 400:
+        case 422:
+        case 403:
+          loginErr(resp.userMessage);
+          break;
+        case 200:
+          passwordDiv.classList.remove('hide');
+          isUsingPWSel.classList.remove('hide');
+          isUsingPWSel.style.cursor = 'pointer';
+          continueBtn.disabled = false;
+          setContinueBtnState('LOGIN');
+          break;
+        default:
+          loginErr(resp.userMessage || '');
+          break;
+      }
+    } catch (err) {
+      loginErr();
+    }
   }
 });
-const login = async () => {
-  password.disabled = true;
-  isUsingPWSel.classList.add('hide');
-  continueBtn.disabled = true;
-  unSetError(passwordErr);
-  setContinueBtnState('Logging in...');
-  const resp = await post('/login', { element: 'osmium' });
-  // WIP
-};
-window.post = async function (url, data) {
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  } catch (err) {
-    return {
-      status: 500,
-      userMessage: `Something went wrong! Please try again.`
-    };
-  }
-};

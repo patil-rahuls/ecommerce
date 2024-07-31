@@ -24,6 +24,10 @@ export const ERROR_CODES = {
     message: `Incorrect OTP`,
     userMessage: `Please re-check your mobile-number/OTP!`
   },
+  ERR_COULDNT_SAVE_USER: {
+    status: 500,
+    message: `Couldn't insert user into db`
+  },
 
   // Login
   ERR_LOGINFORM: {
@@ -33,6 +37,18 @@ export const ERROR_CODES = {
   ERR_LOGINFORM_UNAUTHORIZED: {
     status: 400,
     message: `Login form attempted without authorization/preSessionId`
+  },
+  ERR_UNAUTHORIZED_LOGIN_ATTEMPT: {
+    status: 400,
+    message: `Login/otp attempted without preSessionId OR expired/missing CSRF token`
+  },
+  ERR_COULDNT_SEND_OTP: {
+    status: 500,
+    message: `Couldn't send OTP`
+  },
+  ERR_LOGIN: {
+    status: 500,
+    message: `Login request could not be completed`
   },
 
   // DB
@@ -44,10 +60,14 @@ export const ERROR_CODES = {
     status: 501,
     message: `Database instance not found`
   },
+  DB_QUERY_ERR: {
+    status: 500,
+    message: `Database query failed.`
+  },
 
   // Logout
   ERR_LOGOUT: {
-    status: 503,
+    status: 500,
     message: `Failed to logout user.`,
     userMessage: `Couldn't Logout. Please try again!`
   }

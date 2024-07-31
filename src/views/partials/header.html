@@ -205,20 +205,20 @@
   </nav>
 </div>
 
-<div id="loginForm">
+<div id="loginForm" class="screenCenter hide">
   <i class="fa fa-close close-loginForm"></i>
   <br />
   <h3>Login or Signup</h3>
   <i class="fa-solid fa-phone input-icon" aria-hidden="true"></i>
   <input id="loginId" type="text" placeholder="Mobile Number" />
-  <div id="loginIdErr" class="hide">
+  <div id="loginIdErr" class="err hide">
     <br />
   </div>
   <div id="passwordDiv" class="hide">
     <i class="fa-solid fa-key input-icon" aria-hidden="true"></i>
     <input id="password" type="password" placeholder="OTP" />
   </div>
-  <div id="passwordErr" class="hide">
+  <div id="passwordErr" class="err hide">
     <br />
   </div>
   <div id="pwlogin" class="hide">
@@ -231,4 +231,6 @@
     <a href="#"><strong>Terms & Conditions</strong></a></small
   >
 </div>
-<div id="loginOverlay"></div>
+
+<span id="loading" class="screenCenter hide">Just a sec...</span>
+<div id="blurOverlay" class="hide"></div>
