@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-// import { randomBytes } from 'node:crypto';
 import { BaseError } from './error-middleware.js';
 
 export default {
@@ -19,15 +18,16 @@ export default {
           ?.split('; ')
           ?.filter(c => /ct=/.test(c))?.[0]
           ?.split('=')?.[1];
-        if (!req.session?.ct || !ctCookie) {
-          // Generate a CSRF token
+        // Generate a CSRF token if expired/not-exists.
+        // if (!req.session?.ct || !ctCookie) {
+        if (!ctCookie) {
           const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
           let result = '';
           for (let i = 64; i > 0; --i) {
             result += chars[Math.floor(Math.random() * chars.length)];
           }
           // Tie the CSRF token with the session
-          req.session.ct = result; // randomBytes(36).toString('base64');
+          req.session.ct = result;
           // Set CSRF token in a response cookie
           res.cookie('ct', req.session.ct, { sameSite: 'strict', maxAge: 5 * 60 * 1000 });
         }

@@ -18,6 +18,7 @@ abstract class DB {
           if (!DB.readInstance) {
             DB.readInstance = db.createPool({
               host: config.host,
+              port: config.port,
               user: config.username,
               password: config.password,
               database: config.dbname,
@@ -36,6 +37,7 @@ abstract class DB {
           if (!DB.writeInstance) {
             DB.writeInstance = db.createPool({
               host: config.host,
+              port: config.port,
               user: config.username,
               password: config.password,
               database: config.dbname,

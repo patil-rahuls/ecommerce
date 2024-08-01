@@ -13,6 +13,7 @@ interface User {
   allAddresses?: Address[];
   userGroup?: string;
   createdAt?: string;
+  isAuthenticated: boolean;
 }
 
 export { User };

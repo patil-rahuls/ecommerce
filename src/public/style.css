@@ -295,6 +295,7 @@ button {
 }
 #loginForm .err {
   color: crimson;
+  margin: 0 18px;
 }
 
 @media (max-width: 1100px) {

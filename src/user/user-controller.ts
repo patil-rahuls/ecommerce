@@ -17,11 +17,11 @@ class UserController implements Controller {
   }
 
   private initializeRoutes() {
-    // https://stackoverflow.com/a/65416695
-    // https://stackoverflow.com/questions/38906961/node-express-cannot-get-route
     this.router.get(`/login`, CSRF.setCsrfToken(), this.auth.loginForm);
-    this.router.post(`/auth`, CSRF.setCsrfToken(), this.auth.sendOtp);
-    this.router.post(`/verify`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), this.auth.verify);
+    this.router.post(`/auth`, CSRF.setCsrfToken(), (req, res, next) => this.auth.sendOtp(req, res, next));
+    this.router.post(`/verify`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
+      this.auth.verify(req, res, next)
+    );
     this.router.get(`/logout`, this.auth.logout);
   }
 }

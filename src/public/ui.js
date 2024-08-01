@@ -13,32 +13,34 @@ window.fetchHelper = async function (url, method = 'GET', data = '', headers = '
     };
   }
 };
-// Navbar
-// Thanks to this - https://www.freecodecamp.org/news/how-to-build-a-responsive-navigation-bar-with-dropdown-menu-using-javascript/
+
+// ################################################################################################################################
+// ## Navbar/Hamburger ##
 const hamburgerBtn = document.getElementById('hamburger');
 const navMenu = document.querySelector('.menu');
 const metaMenu = document.querySelector('#meta');
-function toggleHamburger() {
+const toggleHamburger = () => {
   metaMenu.classList.toggle('show');
   navMenu.classList.toggle('show');
-}
+};
 hamburgerBtn.addEventListener('click', toggleHamburger);
 
-// navbar menus
+// ################################################################################################################################
+// ## dropdown menus ##
 const dropdownBtn = document.querySelectorAll('.dropdown-btn');
 const dropdown = document.querySelectorAll('.dropdown');
 const links = document.querySelectorAll('.dropdown a');
-function setAriaExpandedFalse() {
+const setAriaExpandedFalse = () => {
   dropdownBtn.forEach(btn => btn.setAttribute('aria-expanded', 'false'));
-}
-function closeDropdownMenu() {
+};
+const closeDropdownMenu = () => {
   dropdown.forEach(drop => {
     drop.classList.remove('active');
     drop.addEventListener('click', e => e.stopPropagation());
   });
-}
+};
 dropdownBtn.forEach(btn => {
-  btn.addEventListener('click', function (e) {
+  btn.addEventListener('click', e => {
     const dropdownIndex = e.currentTarget.dataset.dropdown;
     const dropdownElement = document.getElementById(dropdownIndex);
     dropdownElement.classList.toggle('active');
@@ -132,24 +134,24 @@ const passwordDiv = document.querySelector('#passwordDiv');
 const isUsingPWSel = document.querySelector(`#pwlogin`);
 isUsingPWSel.addEventListener('click', () => {
   if (isUsingPW) {
-    isUsingPWSel.innerHTML = '<small>Login using OTP</small>';
+    isUsingPWSel.innerHTML = '<small>Login using Password</small>';
     password.setAttribute('placeholder', 'OTP');
     password.value = '';
     isUsingPW = false;
     unSetError(passwordErr);
   } else {
-    isUsingPWSel.innerHTML = '<small>Login using Password</small>';
+    isUsingPWSel.innerHTML = '<small>Login using OTP</small>';
     password.setAttribute('placeholder', 'Password');
     password.value = '';
     isUsingPW = true;
     unSetError(passwordErr);
   }
 });
-const loginErr = (errMsg = '') => {
-  setError(loginIdErr, errMsg || `Couldn't sent OTP. Please try again!`);
+const loginErr = (sel, inputSel, errMsg = '') => {
+  setError(sel, errMsg || `Couldn't sent OTP. Please try again!`);
   setContinueBtnState();
   continueBtn.disabled = false;
-  loginId.disabled = false;
+  inputSel.disabled = false;
 };
 const login = async () => {
   password.disabled = true;
@@ -176,7 +178,7 @@ const login = async () => {
       case 400:
       case 422:
       case 403:
-        loginErr(resp.userMessage);
+        loginErr(passwordErr, password, resp.userMessage);
         break;
       case 200:
         setContinueBtnState('WELCOME !!!');
@@ -185,11 +187,11 @@ const login = async () => {
         window.location.reload();
         break;
       default:
-        loginErr(resp.userMessage || 'Oops. something went wrong!');
+        loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');
         break;
     }
   } catch (err) {
-    loginErr('Oops. something went wrong!');
+    loginErr(passwordErr, password, 'Oops. something went wrong!');
   }
 };
 let isUsingPW;
@@ -236,7 +238,7 @@ continueBtn.addEventListener('click', async () => {
         case 400:
         case 422:
         case 403:
-          loginErr(resp.userMessage);
+          loginErr(loginIdErr, loginId, resp.userMessage);
           break;
         case 200:
           passwordDiv.classList.remove('hide');
@@ -246,11 +248,11 @@ continueBtn.addEventListener('click', async () => {
           setContinueBtnState('LOGIN');
           break;
         default:
-          loginErr(resp.userMessage || '');
+          loginErr(loginIdErr, loginId, resp.userMessage || '');
           break;
       }
     } catch (err) {
-      loginErr();
+      loginErr(loginIdErr, loginId);
     }
   }
 });

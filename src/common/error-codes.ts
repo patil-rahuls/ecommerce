@@ -17,12 +17,12 @@ export const ERROR_CODES = {
   INCORRECT_PASSWORD: {
     status: 422,
     message: `Incorrect password`,
-    userMessage: `Please re-check your mobile-number/password!`
+    userMessage: `Please re-check your password!`
   },
   INCORRECT_OTP: {
     status: 422,
     message: `Incorrect OTP`,
-    userMessage: `Please re-check your mobile-number/OTP!`
+    userMessage: `Please re-check your OTP!`
   },
   ERR_COULDNT_SAVE_USER: {
     status: 500,
