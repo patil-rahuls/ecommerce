@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { BaseError } from './error-middleware.js';
+import { CookieHelper } from '../common/cookie-helper.js';
 
 export default {
   setCsrfToken() {
@@ -13,11 +14,7 @@ export default {
         if (!req.session.preSessionId) {
           throw new BaseError(`ERR_LOGINFORM_UNAUTHORIZED`);
         }
-        const ctCookie = req
-          .header('Cookie')
-          ?.split('; ')
-          ?.filter(c => /ct=/.test(c))?.[0]
-          ?.split('=')?.[1];
+        const ctCookie = CookieHelper.getCookie(req, 'ct');
         // Generate a CSRF token if expired/not-exists.
         // if (!req.session?.ct || !ctCookie) {
         if (!ctCookie) {

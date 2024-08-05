@@ -6,7 +6,8 @@ export default {
   setDbInstance(dbInstance: DBInstance) {
     return async function (req: Request, res: Response, next: NextFunction) {
       try {
-        res.locals[`DB_INSTANCE_${dbInstance}`] = await DB.getInstance(dbInstance);
+        res.locals.DB = {};
+        res.locals.DB[dbInstance] = await DB.getInstance(dbInstance);
       } catch (err) {
         next(err);
       }

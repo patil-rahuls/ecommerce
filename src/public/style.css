@@ -1,25 +1,26 @@
 /* style.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  outline: none;
 }
 :root {
-  --dark-grey: #333333;
+  --dark: #404040;
   --medium-grey: #636363;
+  --fine-grey: darkgrey;
   --light-grey: #eeeeee;
   --ash: #f4f4f4;
-  --primary-color: #008080;
-  --white: white;
+  --primary-color: #4285f4;
+  --light: white;
   --border: 1px solid var(--light-grey);
   --shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
 }
 body {
   font-family: inherit;
   background-color: var(--ash);
-  color: var(--dark-grey);
+  color: var(--dark);
   letter-spacing: -0.4px;
 }
 #blurOverlay {
@@ -31,11 +32,12 @@ body {
   top: 0;
   left: 0;
   background-color: rgba(0, 0, 0, 0.2);
+  z-index: 9999;
 }
 #loading {
-  z-index: 99;
+  z-index: 99999;
   padding: 20px 40px;
-  background: white;
+  background: var(--light);
   border-radius: 30px;
 }
 .hide {
@@ -98,7 +100,7 @@ button {
 }
 .btn-primary-solid {
   background-color: var(--primary-color);
-  color: var(--white);
+  color: var(--light);
   padding-left: 0.7rem;
 }
 .icon {
@@ -109,12 +111,51 @@ button {
 .logo {
   margin-right: 1.5rem;
   background-color: transparent;
+  color: var(--dark);
+}
+
+/* Footer */
+#footer {
+  background: var(--fine-grey);
+  bottom: 0;
+  position: relative;
+  width: 100%;
+  max-height: 60px;
+  padding: 10px;
+  display: grid;
+  align-items: center;
+}
+#footer .footerContainer {
+  margin: 0 auto;
+}
+#footer .footerContainer img {
+  width: 100%;
+  margin-top: 20px;
+}
+#footer .footerContainer small {
+  --Example: 202px;
+  position: absolute;
+  left: 50px;
+  width: calc(100% - var(--Example) / 2);
+  text-align: center;
+}
+
+/* Layout Parent */
+#layout {
+  border: 1px solid var(--primary-color);
+  padding: 1.5rem;
+  margin: 0 auto;
 }
 
 /* Top Header */
 #nav-menu {
-  border-bottom: var(--border);
-  background-color: snow;
+  background-color: var(--light);
+  top: 0;
+  left: 0;
+  width: 100%;
+  position: fixed;
+  z-index: 9999;
+  box-shadow: var(--shadow);
 }
 .container,
 #meta {
@@ -124,6 +165,10 @@ button {
   column-gap: 2rem;
   height: 60px;
   padding: 1.2rem 3rem;
+  z-index: 999;
+}
+#meta {
+  margin-top: 59px;
 }
 .nav-start,
 .nav-end,
@@ -159,7 +204,7 @@ button {
 #cartItemCount {
   font-size: 12px;
   background: var(--primary-color);
-  color: #fff;
+  color: var(--light);
   font-weight: bold;
   padding: 0 5px;
   vertical-align: super;
@@ -172,6 +217,7 @@ button {
   padding: 0.1rem;
   margin-left: 1rem;
   font-size: 1.9rem;
+  color: var(--fine-grey);
 }
 
 /* Meta/Categories Header */
@@ -179,17 +225,17 @@ button {
   height: 50px;
   justify-content: center;
   border-bottom: var(--border);
-  background-color: var(--white);
+  background-color: var(--light);
 }
 
 /* Meta/Categories dropdown menus */
 .menu {
   position: relative;
-  background: var(--white);
+  background: var(--light);
 }
 .menu-bar .nav-link {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: bold;
   letter-spacing: -0.6px;
   padding: 0.3rem;
   min-width: 60px;
@@ -209,7 +255,7 @@ button {
   display: flex;
   flex-direction: column;
   min-width: 230px;
-  background-color: var(--white);
+  background-color: var(--light);
   border-radius: 10px;
   position: absolute;
   top: 36px;
@@ -262,8 +308,9 @@ button {
   width: 40vw;
   background: snow;
   text-align: center;
-  z-index: 9999;
+  z-index: 99999;
   border-radius: 0.5rem;
+  position: fixed;
 }
 .close-loginForm {
   float: right;
@@ -280,7 +327,7 @@ button {
 #loginForm .input-icon {
   position: absolute;
   left: 26.8%;
-  top: 4.6rem;
+  top: 4.4rem;
   font-size: 1.3rem;
   opacity: 0.4;
 }
@@ -290,7 +337,7 @@ button {
 #loginForm small {
   display: inline-block;
   margin: 20px;
-  width: 167px;
+  width: 80%;
   margin-top: 8px;
 }
 #loginForm .err {
@@ -307,8 +354,8 @@ button {
   }
   .menu {
     display: none;
-    position: absolute;
-    top: 112px;
+    position: fixed;
+    top: 59px;
     left: 0;
     min-height: 100vh;
     width: 100vw;
@@ -365,15 +412,23 @@ button {
     padding-bottom: 0.5rem;
     border-bottom: var(--border);
   }
+  #layout {
+    margin-top: 60px;
+  }
 }
 
 @media (max-width: 600px) {
   #meta {
     display: flex;
+    width: 100%;
+    position: fixed;
+    background-color: var(--light);
+    box-shadow: var(--shadow);
+    margin-top: -50px;
   }
-  /* .right-container {
-    display: none;
-  } */
+  #nav-menu {
+    box-shadow: none;
+  }
   #loginForm {
     width: 60vw;
   }
@@ -381,10 +436,21 @@ button {
     display: flex;
   }
   #meta .search input {
-    width: 99vw;
+    width: 118vw;
   }
   .nav-start .search {
     display: none;
+  }
+  .menu {
+    top: 59px;
+    width: inherit;
+  }
+  #layout {
+    margin-top: 110px;
+    width: 121%;
+  }
+  #footer {
+    width: 121%;
   }
 }
 

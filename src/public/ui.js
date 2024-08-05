@@ -87,6 +87,8 @@ const closePopup = popupSel => {
 const loginForm = document.querySelector(`#loginForm`);
 const closeLoginForm = () => {
   closePopup(loginForm);
+  // This may affect UX.
+  window.location.reload();
 };
 blurOverlay.addEventListener('click', closeLoginForm);
 document.querySelector(`.close-loginForm`).addEventListener('click', closeLoginForm);
@@ -134,13 +136,13 @@ const passwordDiv = document.querySelector('#passwordDiv');
 const isUsingPWSel = document.querySelector(`#pwlogin`);
 isUsingPWSel.addEventListener('click', () => {
   if (isUsingPW) {
-    isUsingPWSel.innerHTML = '<small>Login using Password</small>';
+    isUsingPWSel.innerHTML = '<small>Login using Password?</small>';
     password.setAttribute('placeholder', 'OTP');
     password.value = '';
     isUsingPW = false;
     unSetError(passwordErr);
   } else {
-    isUsingPWSel.innerHTML = '<small>Login using OTP</small>';
+    isUsingPWSel.innerHTML = '<small>Login using OTP?</small>';
     password.setAttribute('placeholder', 'Password');
     password.value = '';
     isUsingPW = true;
@@ -153,17 +155,22 @@ const loginErr = (sel, inputSel, errMsg = '') => {
   continueBtn.disabled = false;
   inputSel.disabled = false;
 };
+const getCookie = cookieType => {
+  const regxPattern = new RegExp(String.raw`${cookieType}=`);
+  return document.cookie
+    ?.split('; ')
+    ?.filter(c => regxPattern.test(c))?.[0]
+    ?.split('=')?.[1];
+};
+
 const login = async () => {
   password.disabled = true;
   continueBtn.disabled = true;
-  isUsingPWSel.classList.add('hide');
+  // isUsingPWSel.classList.add('hide');
   unSetError(passwordErr);
   setContinueBtnState('Logging in...');
   try {
-    const ct = document.cookie
-      ?.split('; ')
-      ?.filter(c => /ct=/.test(c))?.[0]
-      ?.split('=')?.[1];
+    const ct = getCookie('ct');
     const resp = await fetchHelper(
       '/user/verify',
       'POST',
@@ -184,7 +191,7 @@ const login = async () => {
         setContinueBtnState('WELCOME !!!');
         continueBtn.style.backgroundColor = '#34A853';
         // REFRESH PAGE
-        window.location.reload();
+        // window.location.reload();
         break;
       default:
         loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');
@@ -194,36 +201,43 @@ const login = async () => {
     loginErr(passwordErr, password, 'Oops. something went wrong!');
   }
 };
-let isUsingPW;
+let isUsingPW, loginIdOk;
 continueBtn.addEventListener('click', async () => {
   blurOverlay.removeEventListener('click', closeLoginForm);
-  if (!new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
-    setError(loginIdErr, 'Please re-check you mobile number');
+  if (loginId.value?.length !== 10 || isNaN(loginId.value) || !new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
+    setError(loginIdErr, 'Please enter a valid mobile-number!');
     return;
-  } else if (!passwordDiv.classList.contains('hide')) {
-    if (isUsingPW) {
-      if (/^[A-Za-z0-9_!@#$^./&+-]*$/.test(password.value) && password.value?.length > 5) {
-        await login();
-      } else {
-        setError(passwordErr, 'Incorrect password');
-        return;
-      }
-    } else if (!isUsingPW && password.value.length === 4 && !isNaN(password.value)) {
-      await login();
-    } else {
-      setError(passwordErr, 'Incorrect OTP');
+  } else if (loginIdOk && !passwordDiv.classList.contains('hide')) {
+    switch (true) {
+      case isUsingPW:
+        if (password.value?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(password.value)) {
+          await login();
+        } else {
+          setError(passwordErr, 'Password is incorrect!');
+          return;
+        }
+        break;
+      case !isUsingPW:
+        if (password.value.length === 4 && !isNaN(password.value)) {
+          await login();
+        } else {
+          setError(passwordErr, 'OTP is incorrect!');
+          return;
+        }
+        break;
+      default:
+        setError(passwordErr, 'OTP/password is incorrect!');
+        break;
     }
   } else {
     // userId is correct
+    loginIdOk = true;
     unSetError(loginIdErr);
     loginId.disabled = true;
     setContinueBtnState('Sending OTP...');
     continueBtn.disabled = true;
     try {
-      const ct = document.cookie
-        ?.split('; ')
-        ?.filter(c => /ct=/.test(c))?.[0]
-        ?.split('=')?.[1];
+      const ct = getCookie('ct');
       const resp = await fetchHelper(
         '/user/auth',
         'POST',

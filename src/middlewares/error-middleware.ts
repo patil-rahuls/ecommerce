@@ -40,12 +40,12 @@ class BaseError extends Error {
     }
 
     // Release DB connections.
-    if (res.locals?.DB_CONN_READ) {
-      res.locals.DB_CONN_READ.release();
+    if (res.locals?.DB_CONN?.READ) {
+      res.locals.DB_CONN.READ.release();
       LOGGER.info('DB connection `READ` Released!');
     }
-    if (res.locals?.DB_CONN_WRITE) {
-      res.locals.DB_CONN_WRITE.release();
+    if (res.locals?.DB_CONN?.WRITE) {
+      res.locals.DB_CONN.WRITE.release();
       LOGGER.info('DB connection `WRITE` Released!');
     }
 

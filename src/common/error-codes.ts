@@ -11,22 +11,29 @@ export const ERROR_CODES = {
   },
   BLACKLISTED_USER: {
     status: 403,
-    message: `User BLACKLISTED`,
-    userMessage: INVALID_MOBILE_STR
+    message: `User BLACKLISTED`
   },
   INCORRECT_PASSWORD: {
     status: 422,
     message: `Incorrect password`,
-    userMessage: `Please re-check your password!`
+    userMessage: `Password is incorrect!`
   },
   INCORRECT_OTP: {
     status: 422,
     message: `Incorrect OTP`,
-    userMessage: `Please re-check your OTP!`
+    userMessage: `OTP is incorrect!`
   },
   ERR_COULDNT_SAVE_USER: {
     status: 500,
     message: `Couldn't insert user into db`
+  },
+  ERR_OTP_REQUESTED_TOO_SOON: {
+    status: 422,
+    message: `OTP re-requested too soon by the user/application`
+  },
+  ERR_COULDNT_SAVE_OTP: {
+    status: 500,
+    message: `Couldn't save OTP to redis.`
   },
 
   // Login
@@ -44,11 +51,16 @@ export const ERROR_CODES = {
   },
   ERR_COULDNT_SEND_OTP: {
     status: 500,
-    message: `Couldn't send OTP`
+    message: `Couldn't send OTP. Code failure`
   },
   ERR_LOGIN: {
     status: 500,
     message: `Login request could not be completed`
+  },
+  ERR_NOT_AUTHENTICATED: {
+    status: 401,
+    message: `Authentication required`,
+    userMessage: `Please log-in first!`
   },
 
   // DB
@@ -63,6 +75,10 @@ export const ERROR_CODES = {
   DB_QUERY_ERR: {
     status: 500,
     message: `Database query failed.`
+  },
+  ERR_REDIS_CONNECTION: {
+    status: 503,
+    message: `Couldn't establish a connection with the redis instance.`
   },
 
   // Logout

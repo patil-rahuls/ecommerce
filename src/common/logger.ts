@@ -3,6 +3,13 @@ abstract class LOGGER {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] INFO - ${msg}`);
   }
+  // Logger for development environment only.
+  public static dev(msg: string) {
+    if (process.env.NODE_ENV === 'development') {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] INFO - ${msg}`);
+    }
+  }
   public static error(msg: string) {
     const timestamp = new Date().toISOString();
     const params = `\x1b[31m\x1b[1m\x1b[47m%s\x1b[0m`;

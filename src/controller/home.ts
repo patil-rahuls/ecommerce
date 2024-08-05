@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express';
 import { Controller } from '../common/interfaces/controller.js';
-// import CSRF from '../middlewares/csrf-middleware.js';
 
 class HomeController implements Controller {
   public path: string;

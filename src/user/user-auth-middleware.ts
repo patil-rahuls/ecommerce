@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
-import { User } from '../common/interfaces/user.js';
 import { LOGGER } from '../common/logger.js';
 import { BaseError } from '../middlewares/error-middleware.js';
 import { CookieHelper } from '../common/cookie-helper.js';
+import { InputValidator } from '../common/input-validator.js';
+import { SMSAuth } from '../common/sms-auth.js';
+import { REDIS_INSTANCE } from '../common/redis.js';
 
 class AuthMiddleware {
   public async loginForm(req: Request, res: Response, next: NextFunction) {
@@ -55,25 +57,15 @@ class AuthMiddleware {
       if (!this.isRequestAuthorized(req, ct)) {
         throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
       }
-      // Validate userId
-      if (!new RegExp(/^[6-9]\d{9}$/).test(userId)) {
-        // The regex above is for Indian mobile numbers.
+      if (!InputValidator.validateMobileNumber(userId)) {
         throw new BaseError(`INVALID_MOBILE`);
       }
 
-      // Generate & Send OTP
-      const otp = Math.floor(1000 + Math.random() * 9000);
-      // TODO: here, add the logic to send OTP SMS to `userId` through AWS SQS.
-      // if(req.session.user) {
-      // req for re-send otp.
-      // TODO: check if 3 minutes have passed and then only send another OTP.
-      // use-> req.session.otpTimestamp
-      // }
-      LOGGER.info(`OTP ${otp} sent to user - ${userId}`);
-      const usr: User = { id: 0, mobile: userId, password: `${otp}`, isAuthenticated: false }; // id: 0 for unauthenticated user.
-      // id: Will be set with actual value, when the user logs in successfully.
-      req.session.user = usr;
-      // req.session.otpTimestamp = Date.now();
+      const otp = await SMSAuth.generateSendOTP(userId, req.session.lastOtpAt);
+      if (!otp || isNaN(otp)) {
+        throw new BaseError(`ERR_COULDNT_SEND_OTP`);
+      }
+      req.session.lastOtpAt = Date.now();
       res.json({
         status: 200,
         userMessage: `We've just sent an OTP to your mobile number. Please use it to log in!`
@@ -94,56 +86,70 @@ class AuthMiddleware {
       if (!this.isRequestAuthorized(req, ct)) {
         throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
       }
-      // Validate userId
-      if (!new RegExp(/^[6-9]\d{9}$/).test(userId)) {
-        // The regex above is for Indian mobile numbers.
+      if (!InputValidator.validateMobileNumber(userId)) {
         throw new BaseError(`INVALID_MOBILE`);
       }
-      let ok;
-      // Validate if passkeys === otp
-      if (passkey?.length === 4) {
-        if (`${passkey}` === req.session.user.password) {
-          ok = true;
-        } else {
-          throw new BaseError('INCORRECT_OTP');
-        }
-      } // Validate/check if passkeys is a password i.e. contains the set of characters
-      else if (passkey?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(passkey)) {
-        ok = true;
-      } else {
-        throw new BaseError('INCORRECT_PASSWORD');
+
+      let otpCorrect = false;
+      switch (true) {
+        // OTP - 4 digits.
+        case passkey?.length === 4 && !isNaN(passkey):
+          const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+          await redisRead.connect();
+          if (`${passkey}` === (await redisRead.get(`${userId}`))) {
+            // If user provided OTP matches with that in redis
+            otpCorrect = true;
+            await redisRead.del(`${userId}`);
+          } else {
+            await redisRead.quit();
+            throw new BaseError('INCORRECT_OTP');
+          }
+          await redisRead.quit();
+          break;
+        // Password - at least 6 digits.
+        case passkey?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(passkey):
+          break;
+        default:
+          throw new BaseError('INCORRECT_PASSWORD');
       }
 
-      if (ok) {
-        res.locals.DB_CONN_WRITE = await res.locals.DB_INSTANCE_WRITE.getConnection();
-        const dbConn = res.locals.DB_CONN_WRITE;
-        const user = await this.getUser(userId, dbConn);
-        if (this.isNewUser(user)) {
+      // Ready to login/set-session
+      const dbInstance = Object.keys(res.locals.DB)?.[0]; // 'WRITE' or 'READ' or other DB Instance identifier.
+      if (!dbInstance) {
+        throw new BaseError('DB_INSTANCE_NOT_FOUND');
+      }
+      res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
+      const dbConn = res.locals.DB_CONN[dbInstance];
+      let user = await this.getUser(userId, dbConn);
+      switch (true) {
+        case user?.[0]?.user_group_id === 6:
+          throw new BaseError(`BLACKLISTED_USER`);
+        case otpCorrect && this.isNewUser(user):
+          // New user authenticated using OTP
           const [result] = await dbConn.execute('INSERT INTO `user` SET `mobile` = ? ', [userId]);
-          if (result?.insertId) {
-            // User registered successfully.
-            const usrDataForSession = await this.getUser(userId, dbConn);
-            await this.setUsrSession(usrDataForSession, req, res);
-            res.json({
-              status: 200,
-              userMessage: `Logged in!`
-            });
-          } else {
+          // result = {... , "insertId": n, ...};
+          if (!result?.insertId) {
             throw new BaseError(`ERR_COULDNT_SAVE_USER`);
           }
-        } else if (user?.user_group_id === 6) {
-          throw new BaseError(`BLACKLISTED_USER`);
-          // } else if (await bcrypt.compare(passkey, user.password)) {
-        } else if (passkey === user.password) {
-          // Existing user
+          [user] = await dbConn.execute('SELECT * FROM `user` WHERE `id` = ? ', [result?.insertId]);
+        case otpCorrect && !this.isNewUser(user):
+        // Existing user authenticated using OTP
+
+        /*case (await bcrypt.compare(passkey, user?.[0]?.password)):*/
+        case passkey === user?.[0]?.password:
+          // Existing user authenticated using password
+          await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
+          LOGGER.info(`DB connection ${dbInstance} Released!`);
           await this.setUsrSession(user, req, res);
           res.json({
             status: 200,
-            userMessage: `Logged in!`
+            userMessage: `Logged in! Welcome!!`
           });
-        } else {
+          break;
+        case passkey !== user?.[0]?.password:
+        /*case (!await bcrypt.compare(passkey, user?.[0]?.password)):*/
+        default:
           throw new BaseError('INCORRECT_PASSWORD');
-        }
       }
     } catch (error) {
       if (error instanceof BaseError) {
@@ -157,20 +163,19 @@ class AuthMiddleware {
   private async getUser(mobile, dbConn) {
     try {
       const [rows] = await dbConn.execute('SELECT * FROM `user` WHERE `mobile` = ?;', [mobile]);
-      LOGGER.info('getUser Results->');
-      LOGGER.info(JSON.stringify(rows));
-      return rows.length ? rows : false;
+      // rows -> [{...}] OR []
+      return rows;
     } catch (err) {
       throw new BaseError(`DB_QUERY_ERR`, err.message);
     }
   }
 
   private isNewUser(user: any) {
-    return typeof user === 'boolean' && !user;
+    return !Boolean(user.length);
   }
 
   private getToken(payload, options: { expiresIn: string } = { expiresIn: '5m' }) {
-    return jwt.sign(payload, process.env.JWT_SECRET, options);
+    return jwt.sign({ payload }, process.env.JWT_SECRET, options);
   }
 
   private async setUsrSession(usrDataForSession, req: Request, res: Response) {
@@ -179,7 +184,7 @@ class AuthMiddleware {
     // Login and set user session.
     req.session.user = usrDataForSession;
     req.session.user.isAuthenticated = true;
-    // Now logged in. Generate access_token and send response.
+    // Generate access_token and send response.
     const at = await this.getToken(`accessId-${req.session.user.mobile}`); // parameter can be any object that we can verify later.
     const rt = await this.getToken(`userId-${req.session.user.mobile}`); // parameter can be any object that we can verify later.
     req.session.at = at;
@@ -191,10 +196,12 @@ class AuthMiddleware {
   }
 
   // Use the following middleware on each request by using it as app.use(...);
-  public async isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  public static async isAuthenticated(req: Request, res: Response, next: NextFunction) {
     if (req?.session?.user?.isAuthenticated) {
       // User is authenticated
       next();
+    } else {
+      throw new BaseError('ERR_NOT_AUTHENTICATED');
     }
   }
 

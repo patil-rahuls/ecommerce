@@ -2,8 +2,8 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
-import { engine } from 'express-handlebars';
 import path from 'path';
+import ejsViewEngine from 'ejs';
 import './config/dotenv.js';
 import { LOGGER } from './common/logger.js';
 import { BaseError } from './middlewares/error-middleware.js';
@@ -70,12 +70,11 @@ class App {
         }
       })
     );
-    // UI & Templating
     this.app.use(express.static(path.join(import.meta.dirname, 'public')));
-    this.app.engine('html', engine({ defaultLayout: 'main', extname: '.html' }));
-    this.app.set('view engine', 'html');
+    // UI & Templating
     this.app.set('views', path.join(import.meta.dirname, 'views'));
-    this.app.enable('view cache'); // this is by default ON on production
+    this.app.engine('html', ejsViewEngine.__express);
+    this.app.set('view engine', 'html');
     LOGGER.info(`Initialized middlewares.`);
   }
 
