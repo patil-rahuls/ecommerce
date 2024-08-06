@@ -196,6 +196,25 @@ button {
   transform: translateY(-50%);
   opacity: 0.6;
 }
+.search-results {
+  position: absolute;
+  top: 37px;
+  border: 1px solid var(--light-grey);
+  left: inherit;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  width: 50vw;
+  background: var(--light);
+  padding: 10px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+}
+.search-results div {
+  margin-bottom: 10px;
+}
+.search-results div a {
+  color: var(--fine-grey);
+  cursor: pointer;
+}
 .right-container {
   display: flex;
   align-items: center;
@@ -306,7 +325,7 @@ button {
 /* Login */
 #loginForm {
   width: 40vw;
-  background: snow;
+  background: var(--light);
   text-align: center;
   z-index: 99999;
   border-radius: 0.5rem;
@@ -440,6 +459,9 @@ button {
   }
   .nav-start .search {
     display: none;
+  }
+  .search-results {
+    width: 100%;
   }
   .menu {
     top: 59px;

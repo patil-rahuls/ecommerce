@@ -270,3 +270,24 @@ continueBtn.addEventListener('click', async () => {
     }
   }
 });
+
+// ################################################################################################################################
+// ## Search ##
+const hideSearchResults = () =>
+  Array.from(document.querySelectorAll(`div.search-results`)).forEach(resultDiv => resultDiv.classList.add('hide'));
+const showSearchResults = () =>
+  Array.from(document.querySelectorAll(`div.search-results`)).forEach(resultDiv => resultDiv.classList.remove('hide'));
+const searchResults = document.querySelector(`div.search-results`);
+Array.from(document.querySelectorAll(`input[name="search"]`)).forEach(el =>
+  el.addEventListener('click', () => {
+    showSearchResults();
+  })
+);
+document.onclick = function (e) {
+  if (e.target.getAttribute('name') !== 'search') {
+    hideSearchResults();
+  }
+};
+// document.querySelector('body').addEventListener("click", () => {
+//   searchResults.classList.remove('hide');
+// });
