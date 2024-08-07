@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Controller } from '../common/interfaces/controller.js';
 import { AuthMiddleware } from './user-auth-middleware.js';
+import { UserMiddleware } from './user-middleware.js';
 import CSRF from '../middlewares/csrf-middleware.js';
 import dbMiddleware from '../middlewares/db-middleware.js';
 
@@ -8,11 +9,13 @@ class UserController implements Controller {
   public path: string;
   public router: Router;
   private auth;
+  private user;
 
   constructor() {
     this.path = '/user';
     this.router = Router();
     this.auth = new AuthMiddleware();
+    this.user = new UserMiddleware();
     this.initializeRoutes();
   }
 
@@ -23,6 +26,7 @@ class UserController implements Controller {
       this.auth.verify(req, res, next)
     );
     this.router.get(`/logout`, this.auth.logout);
+    this.router.get(`/profile`, CSRF.setCsrfToken(), this.user.profile);
   }
 }
 

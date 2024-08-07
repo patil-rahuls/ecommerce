@@ -7,10 +7,14 @@ import { CookieHelper } from '../common/cookie-helper.js';
 import { InputValidator } from '../common/input-validator.js';
 import { SMSAuth } from '../common/sms-auth.js';
 import { REDIS_INSTANCE } from '../common/redis.js';
+import { User } from '../common/interfaces/user.js';
 
 class AuthMiddleware {
   public async loginForm(req: Request, res: Response, next: NextFunction) {
     try {
+      if (req.session?.user?.isAuthenticated) {
+        throw new BaseError('ERR_USR_ALREADY_LOGGED_IN');
+      }
       res.json({
         status: res.statusCode,
         userMessage: `Use your mobile number to login!`
@@ -33,14 +37,9 @@ class AuthMiddleware {
         }
       });
       // an attempt to delete the session and other cookies from client's browser by expiring them.
-      CookieHelper.deleteCookies(res, 'satr_id');
-      CookieHelper.deleteCookies(res, 'ct');
-      CookieHelper.deleteCookies(res, 'at');
-      CookieHelper.deleteCookies(res, 'rt');
-      res.json({
-        status: 200,
-        userMessage: `Logged out. See you soon!`
-      });
+      const cookiesArr = ['satr_id', 'ct', 'at', 'rt'];
+      cookiesArr.forEach(c => CookieHelper.deleteCookies(res, c));
+      res.redirect('/');
     } catch (error) {
       next(new BaseError(`ERR_LOGOUT`, error.message));
     }
@@ -68,7 +67,7 @@ class AuthMiddleware {
       req.session.lastOtpAt = Date.now();
       res.json({
         status: 200,
-        userMessage: `We've just sent an OTP to your mobile number. Please use it to log in!`
+        userMessage: `We've just sent an OTP to your mobile number. Please enter it!`
       });
     } catch (error) {
       if (error instanceof BaseError) {
@@ -82,6 +81,9 @@ class AuthMiddleware {
   public async verify(req: Request, res: Response, next: NextFunction) {
     // handle authentication
     try {
+      if (req.session?.user?.isAuthenticated) {
+        throw new BaseError('ERR_USR_ALREADY_LOGGED_IN');
+      }
       const { userId = '', passkey = '', ct = '' } = req.body;
       if (!this.isRequestAuthorized(req, ct)) {
         throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
@@ -114,7 +116,8 @@ class AuthMiddleware {
       }
 
       // Ready to login/set-session
-      const dbInstance = Object.keys(res.locals.DB)?.[0]; // 'WRITE' or 'READ' or other DB Instance identifier.
+      const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
+      // ^ 'WRITE' or 'READ' or other DB Instance identifier.
       if (!dbInstance) {
         throw new BaseError('DB_INSTANCE_NOT_FOUND');
       }
@@ -140,7 +143,7 @@ class AuthMiddleware {
           // Existing user authenticated using password
           await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
           LOGGER.info(`DB connection ${dbInstance} Released!`);
-          await this.setUsrSession(user, req, res);
+          await this.setUsrSession(user[0], req, res);
           res.json({
             status: 200,
             userMessage: `Logged in! Welcome!!`
@@ -182,7 +185,32 @@ class AuthMiddleware {
     // const salt = await bcrypt.genSaltSync(10);
     // usrDataForSession.id = await bcrypt.hash(usrDataForSession.id, salt);
     // Login and set user session.
-    req.session.user = usrDataForSession;
+    Object.keys(usrDataForSession).forEach(k => {
+      switch (k) {
+        case 'default_billing_addr':
+          usrDataForSession['defaultBillingAddress'] = usrDataForSession[k];
+          delete usrDataForSession[k];
+          break;
+        case 'default_shipping_addr':
+          usrDataForSession['defaultShippingAddress'] = usrDataForSession[k];
+          delete usrDataForSession[k];
+          break;
+        case 'user_group_id':
+          usrDataForSession['userGroup'] = usrDataForSession[k];
+          delete usrDataForSession[k];
+          break;
+        case 'created_at':
+          usrDataForSession['createdAt'] = usrDataForSession[k];
+          delete usrDataForSession[k];
+          break;
+        default:
+          if (usrDataForSession[k] === null) {
+            usrDataForSession[k] = '';
+          }
+          break;
+      }
+    });
+    req.session.user = <User>usrDataForSession;
     req.session.user.isAuthenticated = true;
     // Generate access_token and send response.
     const at = await this.getToken(`accessId-${req.session.user.mobile}`); // parameter can be any object that we can verify later.

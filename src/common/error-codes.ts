@@ -62,6 +62,14 @@ export const ERROR_CODES = {
     message: `Authentication required`,
     userMessage: `Please log-in first!`
   },
+  ERR_USR_ALREADY_LOGGED_IN: {
+    status: 400,
+    message: `User is already logged in.`
+  },
+  ERR_PROFILE_PAGE: {
+    status: 500,
+    message: `Failed in Profile page.`
+  },
 
   // DB
   ERR_DB_CONNECTION: {

@@ -85,28 +85,36 @@ const closePopup = popupSel => {
 };
 // ## Popup/Modals - LoginForm ##
 const loginForm = document.querySelector(`#loginForm`);
+const loginBtn = document.querySelector(`#login`);
+const closeLoginFormSel = document.querySelector(`.close-loginForm`);
 const closeLoginForm = () => {
   closePopup(loginForm);
   // This may affect UX.
   window.location.reload();
 };
 blurOverlay.addEventListener('click', closeLoginForm);
-document.querySelector(`.close-loginForm`).addEventListener('click', closeLoginForm);
-document.querySelector(`#login`).addEventListener('click', async () => {
-  blurOverlay.classList.remove('hide');
-  loading.classList.remove('hide');
-  try {
-    const resp = await fetchHelper('/user/login');
-    if (resp.status === 200) {
-      loading.classList.add('hide');
-      loginForm.classList.remove('hide');
-    } else {
+closeLoginFormSel.addEventListener('click', closeLoginForm);
+if (loginBtn) {
+  loginBtn.addEventListener('click', async () => {
+    blurOverlay.classList.remove('hide');
+    loading.classList.remove('hide');
+    try {
+      const resp = await fetchHelper('/user/login');
+      if (resp.status === 200) {
+        loading.classList.add('hide');
+        loginForm.classList.remove('hide');
+      } else {
+        loading.innerText = 'Something went wrong! Please try again.';
+      }
+    } catch (err) {
       loading.innerText = 'Something went wrong! Please try again.';
     }
-  } catch (err) {
-    loading.innerText = 'Something went wrong! Please try again.';
-  }
-});
+  });
+}
+const logoutBtn = document.querySelector(`a[href*="/user/logout"]`);
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => loading.classList.remove('hide'));
+}
 
 // ################################################################################################################################
 // ## Popup/Modals - LoginForm - CTAs ##
@@ -166,7 +174,6 @@ const getCookie = cookieType => {
 const login = async () => {
   password.disabled = true;
   continueBtn.disabled = true;
-  // isUsingPWSel.classList.add('hide');
   unSetError(passwordErr);
   setContinueBtnState('Logging in...');
   try {
@@ -188,10 +195,12 @@ const login = async () => {
         loginErr(passwordErr, password, resp.userMessage);
         break;
       case 200:
-        setContinueBtnState('WELCOME !!!');
+        isUsingPWSel.classList.add('hide');
+        // closeLoginFormSel.removeEventListener('click', closeLoginForm);
+        closeLoginFormSel.remove();
+        setContinueBtnState('Just a sec...');
         continueBtn.style.backgroundColor = '#34A853';
-        // REFRESH PAGE
-        // window.location.reload();
+        window.location.reload();
         break;
       default:
         loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');

@@ -3,7 +3,7 @@ import { Address } from './address.js';
 
 interface User {
   id: number;
-  mobile: number;
+  mobile: string;
   password?: string;
   email?: string;
   name?: string;

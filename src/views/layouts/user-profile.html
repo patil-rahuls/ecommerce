@@ -1,0 +1,84 @@
+<main>
+  <h2>My Account</h2>
+  <div class="profileForm">
+    <table>
+      <tr>
+        <td><label>Mobile</label></td>
+        <td><input name="mobile" value="<%= data.mobile %>" disabled /></td>
+      </tr>
+
+      <tr>
+        <td><label>Name</label></td>
+        <td><input value="<%= data.name %>" name="name" /></td>
+      </tr>
+
+      <tr>
+        <td><label>Email</label></td>
+        <td><input value="<%= data.email %>" name="email" /></td>
+      </tr>
+
+      <tr>
+        <td><label>Gender</label></td>
+        <td>
+          <select name="gender">
+            <option value="0">Please select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </td>
+      </tr>
+
+      <tr>
+        <td><label>Password</label></td>
+        <td>
+          <span id="changePassword">Set/Change</span>
+          <input class="hide" name="password" type="password" placeholder="Password" />
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><input class="hide" name="re-password" type="password" placeholder="Re-type Password" /></td>
+      </tr>
+
+      <tr>
+        <td></td>
+        <td><input type="submit" class="btn-primary-solid" value="UPDATE" /></td>
+      </tr>
+    </table>
+  </div>
+</main>
+<main>
+  <h2>
+    My Addresses
+    <button
+      style="margin-left: 10px; float: right; margin-top: 0px; border: 1px solid"
+      class="btn btn-primary add-address"
+    >
+      Add new
+    </button>
+  </h2>
+  <div class="profileForm">
+    <table>
+      <tbody>
+        <tr>
+          <td class="address">
+            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
+            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
+          </td>
+          <td class="address">
+            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
+            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
+          </td>
+          <td class="address">
+            <textarea class="default"> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
+            <a>Edit</a> | <b>Default</b>
+          </td>
+          <td class="address">
+            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
+            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>

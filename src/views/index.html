@@ -13,9 +13,12 @@
     />
   </head>
   <body>
-    <%- include('partials/header.html') %>
+    <% if(data) { %> <%- include('partials/header.html', { data }) %> <% } else { %> <%- include('partials/header.html')
+    %> <% } %> <% if(layout) { %>
+    <div id="layout"><%- include('layouts/'+ layout + '.html') %></div>
+    <% } else { %>
     <div id="layout"><%- include('layouts/home.html') %></div>
-    <%- include('partials/footer.html') %>
+    <% } %> <%- include('partials/footer.html') %>
     <script type="text/javascript" src="/ui.js"></script>
   </body>
 </html>
