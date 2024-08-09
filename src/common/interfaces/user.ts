@@ -8,8 +8,8 @@ interface User {
   email?: string;
   name?: string;
   gender?: Gender;
-  defaultBillingAddress?: Address;
-  defaultShippingAddress?: Address;
+  defaultBillingAddress?: number; // points to Address.id
+  defaultShippingAddress?: number; // points to Address.id
   allAddresses?: Address[];
   userGroup?: string;
   createdAt?: string;

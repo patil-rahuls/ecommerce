@@ -26,7 +26,15 @@ class UserController implements Controller {
       this.auth.verify(req, res, next)
     );
     this.router.get(`/logout`, this.auth.logout);
-    this.router.get(`/profile`, CSRF.setCsrfToken(), this.user.profile);
+    this.router.get(`/profile`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('READ'), (req, res, next) =>
+      this.user.profile(req, res, next)
+    );
+    this.router.post(`/profile`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
+      this.user.updateProfile(req, res, next)
+    );
+    this.router.post(`/address`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
+      this.user.updateAddress(req, res, next)
+    );
   }
 }
 

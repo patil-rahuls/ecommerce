@@ -45,7 +45,7 @@ class AuthMiddleware {
     }
   }
 
-  private isRequestAuthorized(req: Request, ct) {
+  public static isRequestAuthorized(req: Request, ct) {
     const ctCookie = CookieHelper.getCookie(req, 'ct');
     return [ct, ctCookie, req.header('X-XSRF-TOKEN')].every(token => token === req.session.ct);
   }
@@ -53,7 +53,7 @@ class AuthMiddleware {
   public async sendOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId = '', ct = '' } = req.body;
-      if (!this.isRequestAuthorized(req, ct)) {
+      if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
         throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
       }
       if (!InputValidator.validateMobileNumber(userId)) {
@@ -85,7 +85,7 @@ class AuthMiddleware {
         throw new BaseError('ERR_USR_ALREADY_LOGGED_IN');
       }
       const { userId = '', passkey = '', ct = '' } = req.body;
-      if (!this.isRequestAuthorized(req, ct)) {
+      if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
         throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
       }
       if (!InputValidator.validateMobileNumber(userId)) {
@@ -134,7 +134,10 @@ class AuthMiddleware {
           if (!result?.insertId) {
             throw new BaseError(`ERR_COULDNT_SAVE_USER`);
           }
-          [user] = await dbConn.execute('SELECT * FROM `user` WHERE `id` = ? ', [result?.insertId]);
+          [user] = await dbConn.execute(
+            'SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `id` = ? ;',
+            [result?.insertId]
+          );
         case otpCorrect && !this.isNewUser(user):
         // Existing user authenticated using OTP
 
@@ -165,7 +168,10 @@ class AuthMiddleware {
 
   private async getUser(mobile, dbConn) {
     try {
-      const [rows] = await dbConn.execute('SELECT * FROM `user` WHERE `mobile` = ?;', [mobile]);
+      const [rows] = await dbConn.execute(
+        'SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `mobile` = ?;',
+        [mobile]
+      );
       // rows -> [{...}] OR []
       return rows;
     } catch (err) {
@@ -185,31 +191,6 @@ class AuthMiddleware {
     // const salt = await bcrypt.genSaltSync(10);
     // usrDataForSession.id = await bcrypt.hash(usrDataForSession.id, salt);
     // Login and set user session.
-    Object.keys(usrDataForSession).forEach(k => {
-      switch (k) {
-        case 'default_billing_addr':
-          usrDataForSession['defaultBillingAddress'] = usrDataForSession[k];
-          delete usrDataForSession[k];
-          break;
-        case 'default_shipping_addr':
-          usrDataForSession['defaultShippingAddress'] = usrDataForSession[k];
-          delete usrDataForSession[k];
-          break;
-        case 'user_group_id':
-          usrDataForSession['userGroup'] = usrDataForSession[k];
-          delete usrDataForSession[k];
-          break;
-        case 'created_at':
-          usrDataForSession['createdAt'] = usrDataForSession[k];
-          delete usrDataForSession[k];
-          break;
-        default:
-          if (usrDataForSession[k] === null) {
-            usrDataForSession[k] = '';
-          }
-          break;
-      }
-    });
     req.session.user = <User>usrDataForSession;
     req.session.user.isAuthenticated = true;
     // Generate access_token and send response.

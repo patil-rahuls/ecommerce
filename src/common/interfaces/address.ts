@@ -1,11 +1,12 @@
 import { AddressType } from '../types.js';
 
 interface Address {
+  id: number;
   name: string;
   mobile: number;
   pincode: number;
-  address_text: string;
-  address_type: AddressType;
+  addressText: string;
+  addressType: AddressType;
 }
 
 export { Address };

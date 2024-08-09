@@ -11,38 +11,65 @@
         <td><label>Name</label></td>
         <td><input value="<%= data.name %>" name="name" /></td>
       </tr>
+      <tr id="nameErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
+      </tr>
 
       <tr>
         <td><label>Email</label></td>
         <td><input value="<%= data.email %>" name="email" /></td>
+      </tr>
+      <tr id="emailErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
       </tr>
 
       <tr>
         <td><label>Gender</label></td>
         <td>
           <select name="gender">
-            <option value="0">Please select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
+            <option value="">Please select</option>
+            <!-- <option value="Male" <%= (data.gender ==='Male') && 'selected' %> >Male</option>
+            <option value="Female" <%= (data.gender ==='Female') && 'selected' %>>Female</option> -->
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
           </select>
         </td>
+      </tr>
+      <tr id="genderErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
       </tr>
 
       <tr>
         <td><label>Password</label></td>
         <td>
-          <span id="changePassword">Set/Change</span>
-          <input class="hide" name="password" type="password" placeholder="Password" />
+          <span class="" id="changePassword">Set/Change</span>
+          <input class="hide" name="password" type="password" />
         </td>
       </tr>
-      <tr>
+      <tr id="profilePasswordErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
+      </tr>
+
+      <tr id="re-password" class="hide">
         <td></td>
-        <td><input class="hide" name="re-password" type="password" placeholder="Re-type Password" /></td>
+        <td><input name="repassword" type="password" placeholder="Re-type Password" /></td>
+      </tr>
+      <tr id="profileRePasswordErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
       </tr>
 
       <tr>
         <td></td>
-        <td><input type="submit" class="btn-primary-solid" value="UPDATE" /></td>
+        <td><input id="update-profile" type="button" class="btn-primary-solid" value="UPDATE" /></td>
+      </tr>
+      <tr id="profileUpdateErr" class="hide err">
+        <td><label></label></td>
+        <td><span></span></td>
       </tr>
     </table>
   </div>
@@ -50,33 +77,62 @@
 <main>
   <h2>
     My Addresses
-    <button
-      style="margin-left: 10px; float: right; margin-top: 0px; border: 1px solid"
-      class="btn btn-primary add-address"
-    >
-      Add new
-    </button>
+    <button id="add-address" class="btn btn-primary add-address">Add new</button>
   </h2>
   <div class="profileForm">
+    <div class="addressForm">
+      <input name="addrId" class="hide" value="" />
+      <input name="addrName" placeholder="Contact Name (Required)*" />
+      <span class="addrNameErr err hide">Invalid Name</span>
+
+      <input name="addrMobile" placeholder="Phone Number (Required)*" />
+      <span class="addrMobileErr err hide">Invalid Mobile Number</span>
+
+      <input name="addrLine1" class="addr" placeholder="House No. Bldg Name (Required)*" />
+      <span class="addrLine1Err err hide">Invalid Address</span>
+
+      <input name="addrLine2" class="addr" placeholder="City/Town, State (Required)*" />
+      <span class="addrLine2Err err hide">Invalid Address</span>
+
+      <input name="addrPincode" placeholder="Pincode (Required)*" />
+      <span class="addrPincodeErr err hide">Invalid Pincode</span>
+
+      <div id="addr-type">
+        <label class="Home"><input type="radio" value="Home" name="addrType" /><span>Home</span></label>
+        <label class="Work"><input type="radio" value="Work" name="addrType" /><span>Work</span></label>
+      </div>
+      <span class="addrTypeErr err hide">Please choose Address-Type</span>
+      <input name="saveAddr" type="button" class="btn-primary-solid" value="Save" />
+      <span class="addrUpdateErr err hide">Something went wrong!</span>
+      <input name="cancelAddr" type="button" class="btn-primary" value="Cancel" />
+    </div>
     <table>
       <tbody>
         <tr>
-          <td class="address">
-            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
-            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
+          <% if(data?.allAddresses?.length) { data.allAddresses.forEach(addr => { const isDefault = (addr.id ===
+          data.defaultShippingAddress); let tdClass=''; if(isDefault){ tdClass = 'default'; } %>
+          <td class="address <%= tdClass %>">
+            <div>
+              <span class="address-type"><%= addr.addressType %></span>
+              <% if(isDefault) { %>
+              <span class="address-type default">Default</span>
+              <% } %>
+              <br />
+              <span class="address-name"><b><%= addr.name %></b></span>
+              <span class="address-text"><%= addr.addressText %></span>
+              <span class="address-pincode"><%= addr.pincode %></span>
+              <span class="address-id hide"><%= addr.id %></span>
+              <br />
+              <span class="address-mobile">Phone Number: <%= addr.mobile %></span>
+            </div>
+            <br />
+            <a class="editAddr">Edit</a>
+            <a class="delAddr">Remove</a>
+            <% if(!isDefault) { %>
+            <a class="defAddr">Set as Default</a>
+            <% } %>
           </td>
-          <td class="address">
-            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
-            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
-          </td>
-          <td class="address">
-            <textarea class="default"> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
-            <a>Edit</a> | <b>Default</b>
-          </td>
-          <td class="address">
-            <textarea> ksdhfks, kjsdf, lsdlflsdkf, lsdhfksdhfk, Mymbai-431213 </textarea>
-            <a>Edit</a> | <a>Delete</a> | <a>Set as Default</a>
-          </td>
+          <% }); } %>
         </tr>
       </tbody>
     </table>

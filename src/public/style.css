@@ -13,6 +13,9 @@
   --light-grey: #eeeeee;
   --ash: #f4f4f4;
   --primary-color: #4285f4;
+  --loading-color: darkorange;
+  --success: #34a853;
+  --fail: crimson;
   --light: white;
   --border: 1px solid var(--light-grey);
   --shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
@@ -39,6 +42,7 @@ body {
   padding: 20px 40px;
   background: var(--light);
   border-radius: 30px;
+  position: fixed;
 }
 .hide {
   display: none;
@@ -77,13 +81,19 @@ input {
   width: 20vw;
   border: var(--border);
 }
-textarea {
+.success {
+  color: var(--success);
+}
+.err {
+  color: var(--fail);
+}
+/* textarea {
   background-color: var(--ash);
   border-radius: 6px;
   padding: 0.7rem;
   font-size: 16px;
   border: var(--border);
-}
+} */
 button {
   border: none;
   background-color: transparent;
@@ -139,8 +149,11 @@ select {
 }
 .btn-primary-solid {
   background-color: var(--primary-color);
-  color: var(--light);
+  color: var(--light) !important;
   padding-left: 0.7rem;
+}
+.loading {
+  background-color: var(--loading-color);
 }
 .icon {
   padding: 0.5rem;
@@ -157,6 +170,7 @@ main {
   padding: 10px;
   border-radius: 10px;
   margin-bottom: 20px;
+  box-shadow: var(--shadow);
 }
 main * {
   margin: 10px;
@@ -165,15 +179,63 @@ main * {
   color: var(--fine-grey);
   font-weight: bold;
   display: flex;
+  justify-content: end;
+  margin-left: 0;
 }
 .profileForm input {
   width: 180px;
   padding-left: 12px;
   font-weight: bold;
+  color: var(--medium-grey);
 }
-.profileForm textarea {
+.profileForm input::placeholder {
+  font-weight: normal;
+  font-style: italic;
+  color: var(--fine-grey);
+}
+/* .profileForm textarea {
   width: 280px;
   margin: 0px;
+  resize: none;
+} */
+.profileForm #changePassword {
+  cursor: pointer;
+  color: var(--primary-color);
+}
+.profileForm .addressForm {
+  border: 1px solid var(--light-grey);
+  margin-left: 0;
+  display: none; /*inline-grid;*/
+  width: 100%;
+}
+.profileForm .addressForm input {
+  min-width: 278px;
+}
+.profileForm .addressForm .err {
+  margin-top: 0;
+  margin-left: 22px;
+}
+.profileForm .addressForm .success {
+  margin: 0 auto;
+}
+.profileForm .addressForm #addr-type label {
+  float: left;
+  width: auto;
+  margin: 4px;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  overflow: auto;
+}
+.profileForm .addressForm #addr-type label span {
+  text-align: center;
+  display: block;
+}
+.profileForm .addressForm #addr-type label input {
+  position: absolute;
+  left: -999px;
+}
+.profileForm .addressForm #addr-type input:checked + span {
+  color: var(--primary-color);
 }
 
 /* Footer */
@@ -204,7 +266,6 @@ main * {
 
 /* Layout Parent */
 #layout {
-  border: 1px solid var(--primary-color);
   padding: 1.5rem;
   margin: 0 auto;
 }
@@ -429,7 +490,6 @@ main * {
   margin-top: 8px;
 }
 #loginForm .err {
-  color: crimson;
   margin: 0 18px;
 }
 
@@ -440,26 +500,50 @@ main * {
   width: 281.5px;
   display: inline-block;
   margin-right: 20px;
+  padding-bottom: 10px;
+  border-radius: 6px;
 }
-.profileForm textarea {
+/* .profileForm textarea {
   border-radius: 0;
   height: 200px;
+  font-size: 14px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
 }
 .profileForm textarea:focus {
   border: 1px solid var(--primary-color);
-  box-shadow: var(--shadow);
 }
 .profileForm textarea:not(:focus) {
   border: 1px solid var(--fine-grey);
   box-shadow: none;
-}
-.profileForm textarea.default {
-  font-weight: bold;
+} */
+.profileForm .address.default {
   color: var(--dark);
+  font-weight: 600;
+  box-shadow: rgba(99, 99, 99, 1) 0px 2px 8px 0px;
 }
 .profileForm .address a {
   color: var(--primary-color);
   vertical-align: middle;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-color);
+  margin: 0px 6px;
+  vertical-align: super;
+  font-weight: normal;
+}
+.profileForm .address .address-type {
+  background: var(--fine-grey);
+  color: var(--light);
+  padding: 2px 10px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.profileForm .address .address-type.default {
+  background: var(--primary-color);
+}
+.profileForm .address .address-text {
+  display: flex;
 }
 main .add-address {
   margin-left: 10px;
@@ -544,6 +628,13 @@ main .add-address {
 }
 
 @media (max-width: 600px) {
+  #loading {
+    padding: 10px 18px;
+    margin: 10%;
+    border-radius: 10px;
+    width: 120px;
+    margin-left: 0px;
+  }
   #meta {
     display: flex;
     width: 100%;
@@ -569,6 +660,9 @@ main .add-address {
   }
   .search-results {
     width: 100%;
+  }
+  .addressForm input.addr {
+    width: auto !important;
   }
   .menu {
     top: 59px;

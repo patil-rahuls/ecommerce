@@ -1,5 +1,5 @@
 // Its always a good idea to have an dictionary of `Error Code - Description` pairs for evey project.
-export const GENERIC_ERR_STR = `Something went wrong! Please try again.`;
+export const GENERIC_ERR_STR = `Something went wrong! Please try again`;
 export const INVALID_MOBILE_STR = `Please enter a valid mobile-number!`;
 export const ERROR_CODES = {
   // if property `userMessage` is not specified it will default to GENERIC_ERR_STR
@@ -8,6 +8,32 @@ export const ERROR_CODES = {
     status: 422,
     message: `Invalid mobile number`,
     userMessage: INVALID_MOBILE_STR
+  },
+  INVALID_NAME: {
+    status: 422,
+    message: `Invalid characters in name`,
+    userMessage: `Please enter a valid Name`
+  },
+  INVALID_EMAIL: {
+    status: 422,
+    message: `Invalid email`,
+    userMessage: `Please enter a valid Email ID`
+  },
+  INVALID_GENDER: {
+    status: 422,
+    message: `Invalid gender`,
+    userMessage: `Please select a valid Gender`
+  },
+  INVALID_PASSWORD: {
+    // While setting a password.
+    status: 422,
+    message: `Invalid password`,
+    userMessage: `Password must be at least 6 digits`
+  },
+  CONFIRM_PASSWORD_ERR: {
+    status: 422,
+    message: `Password re-entered was incorrect/invalid/non-matching`,
+    userMessage: `Please re-enter the password correctly`
   },
   BLACKLISTED_USER: {
     status: 403,
@@ -33,7 +59,7 @@ export const ERROR_CODES = {
   },
   ERR_COULDNT_SAVE_OTP: {
     status: 500,
-    message: `Couldn't save OTP to redis.`
+    message: `Couldn't save OTP to redis`
   },
 
   // Login
@@ -64,17 +90,22 @@ export const ERROR_CODES = {
   },
   ERR_USR_ALREADY_LOGGED_IN: {
     status: 400,
-    message: `User is already logged in.`
+    message: `User is already logged in`
   },
   ERR_PROFILE_PAGE: {
     status: 500,
-    message: `Failed in Profile page.`
+    message: `Failed in Profile page`
+  },
+  ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT: {
+    status: 400,
+    message: `Profile edit attempted without preSessionId OR expired/missing CSRF token`,
+    userMessage: `Please try again!`
   },
 
   // DB
   ERR_DB_CONNECTION: {
     status: 503,
-    message: `Couldn't establish a connection with the database instance.`
+    message: `Couldn't establish a connection with the database instance`
   },
   DB_INSTANCE_NOT_FOUND: {
     status: 501,
@@ -82,17 +113,17 @@ export const ERROR_CODES = {
   },
   DB_QUERY_ERR: {
     status: 500,
-    message: `Database query failed.`
+    message: `Database query failed`
   },
   ERR_REDIS_CONNECTION: {
     status: 503,
-    message: `Couldn't establish a connection with the redis instance.`
+    message: `Couldn't establish a connection with the redis instance`
   },
 
   // Logout
   ERR_LOGOUT: {
     status: 500,
-    message: `Failed to logout user.`,
+    message: `Failed to logout user`,
     userMessage: `Couldn't Logout. Please try again!`
   }
 };

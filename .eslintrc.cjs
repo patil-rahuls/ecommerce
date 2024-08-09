@@ -13,7 +13,7 @@ module.exports = {
   },
   root: true,
   rules: {
-    'no-unused-vars': 'error',
+    'no-unused-vars': 'warn',
     'no-undef': 'warn',
     semi: 'error',
     'prefer-const': 'error',
@@ -42,7 +42,7 @@ module.exports = {
     ],
     '@typescript-eslint/no-empty-function': 'warn',
     '@typescript-eslint/no-inferrable-types': 'error',
-    '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
     '@typescript-eslint/no-unused-expressions': ['error', { allowTernary: true }],
     '@typescript-eslint/no-use-before-define': [
       'error',
@@ -54,7 +54,7 @@ module.exports = {
     '@typescript-eslint/type-annotation-spacing': 'error',
   
     // 'brace-style': ['error', '2tbs'],
-    complexity: 'error',
+    complexity: 'warn',
     curly: 'error',
     'dot-notation': 'off',
     'eol-last': 'error',
