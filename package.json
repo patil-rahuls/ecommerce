@@ -62,6 +62,7 @@
     "./src/**/*.ts": [
       "npm run prettier:fix",
       "npm run lint"
-    ]
+    ],
+    "*.{js,css,html}": "npm run prettier:fix"
   }
 }
