@@ -270,7 +270,7 @@
   <div id="pwlogin" class="hide">
     <small>Login using password?</small>
   </div>
-  <input type="submit" class="btn-primary-solid" value="CONTINUE" />
+  <input id="login-btn" type="submit" class="btn btn-primary-solid" value="CONTINUE" />
   <br />
   <small
     >By continuing, I agree to the <a href="#"><strong>Privacy Policy</strong></a> &
@@ -278,5 +278,8 @@
   >
 </div>
 
-<span id="loading" class="screenCenter hide"><b>Hang on..</b></span>
+<div id="loading" class="screenCenter hide">
+  <b>Hang on..</b>
+  <input type="button" class="btn btn-primary-solid hide" value="RETRY" />
+</div>
 <div id="blurOverlay" class="hide"></div>

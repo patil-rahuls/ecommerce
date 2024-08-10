@@ -1,4 +1,7 @@
-window.fetchHelper = async function (url, method = 'GET', data = '', headers = '') {
+// ################################################################################################################################
+// ## Common ##
+const GENERIC_ERR = 'Please try again!';
+const fetchData = async (url, method = 'GET', data = '', headers = '') => {
   try {
     const res = await fetch(url, {
       method,
@@ -13,8 +16,20 @@ window.fetchHelper = async function (url, method = 'GET', data = '', headers = '
     };
   }
 };
-// ################################################################################################################################
-// ## Input Validation Rules ##
+const refreshPage = (delay = 2000) => {
+  setTimeout(() => {
+    window.location.reload();
+  }, delay);
+};
+const getCookie = cookieType => {
+  const regxPattern = new RegExp(String.raw`${cookieType}=`);
+  return document.cookie
+    ?.split('; ')
+    ?.filter(c => regxPattern.test(c))?.[0]
+    ?.split('=')?.[1];
+};
+
+// ## Input Validation ##
 const validateName = name => {
   const regxPattern = new RegExp(/^[A-z ]+$/);
   return name?.length <= 70 && regxPattern.test(name);
@@ -45,22 +60,37 @@ const validatePincode = pc => {
   return pc?.length === 6 && regxPattern.test(pc);
 };
 
-// ################################################################################################################################
-// ## Navbar/Hamburger ##
-const hamburgerBtn = document.getElementById('hamburger');
-const navMenu = document.querySelector('.menu');
-const metaMenu = document.querySelector('#meta');
-const toggleHamburger = () => {
-  metaMenu.classList.toggle('show');
-  navMenu.classList.toggle('show');
+const hideElement = sel => {
+  !sel.classList.contains('hide') && sel.classList.add('hide');
 };
-hamburgerBtn.addEventListener('click', toggleHamburger);
+const showElement = (sel, displayProp = '') => {
+  sel.classList.contains('hide') && sel.classList.remove('hide');
+  if (displayProp) {
+    sel.style.display = displayProp;
+  }
+};
+const setBtnState = (btnSel, inrTxt, displayProp = '') => {
+  btnSel.value = inrTxt || 'CONTINUE';
+  if (!displayProp) {
+    btnSel.classList.contains('loading') && btnSel.classList.remove('loading');
+    btnSel.style.backgroundColor = 'var(--primary-color)';
+    return;
+  }
+  btnSel.classList.add(displayProp);
+};
 
 // ################################################################################################################################
-// ## dropdown menus ##
+// ## Navbar/Hamburger ##
+const toggleHamburger = () => {
+  document.querySelector('#meta').classList.toggle('show-flex');
+  document.querySelector('.menu').classList.toggle('show');
+};
+document.getElementById('hamburger').addEventListener('click', toggleHamburger);
+
+// ################################################################################################################################
+// ## Dropdown Menus ##
 const dropdownBtn = document.querySelectorAll('.dropdown-btn');
 const dropdown = document.querySelectorAll('.dropdown');
-const links = document.querySelectorAll('.dropdown a');
 const setAriaExpandedFalse = () => {
   dropdownBtn.forEach(btn => btn.setAttribute('aria-expanded', 'false'));
 };
@@ -70,6 +100,19 @@ const closeDropdownMenu = () => {
     drop?.addEventListener('click', e => e.stopPropagation());
   });
 };
+// hide/close drpdwn-menu when clicked on the document body
+document.documentElement.addEventListener('click', () => {
+  closeDropdownMenu();
+  setAriaExpandedFalse();
+});
+// hide/close drpdwn-menu when dropdown lnks are clicked.
+document.querySelectorAll('.dropdown a').forEach(link =>
+  link?.addEventListener('click', () => {
+    closeDropdownMenu();
+    setAriaExpandedFalse();
+    toggleHamburger();
+  })
+);
 dropdownBtn.forEach(btn => {
   btn?.addEventListener('click', e => {
     const dropdownIndex = e.currentTarget.dataset.dropdown;
@@ -84,20 +127,7 @@ dropdownBtn.forEach(btn => {
     btn.setAttribute('aria-expanded', btn.getAttribute('aria-expanded') === 'false' ? 'true' : 'false');
   });
 });
-// close dropdown menu when the dropdown links are clicked
-links.forEach(link =>
-  link?.addEventListener('click', () => {
-    closeDropdownMenu();
-    setAriaExpandedFalse();
-    toggleHamburger();
-  })
-);
-// close dropdown menu when you click on the document body
-document.documentElement.addEventListener('click', () => {
-  closeDropdownMenu();
-  setAriaExpandedFalse();
-});
-// close dropdown when the escape key is pressed
+// hide/close drpdwn on escape key press
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeDropdownMenu();
@@ -109,58 +139,62 @@ document.addEventListener('keydown', e => {
 // ## Popup/Modals ##
 const loading = document.querySelector(`#loading`);
 const blurOverlay = document.querySelector(`#blurOverlay`);
+const retryBtn = document.querySelector(`#loading input`);
 const closePopup = popupSel => {
-  !popupSel.classList.contains('hide') && popupSel.classList.add('hide');
-  !loading.classList.contains('hide') && loading.classList.add('hide');
-  !blurOverlay.classList.contains('hide') && blurOverlay.classList.add('hide');
+  hideElement(popupSel);
+  hideElement(loading);
+  hideElement(blurOverlay);
 };
-// ## Popup/Modals - LoginForm ##
+const toggleLoading = (show = '') => {
+  if (show) {
+    showElement(loading);
+    showElement(blurOverlay);
+  } else {
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+};
+const logoutBtn = document.querySelector(`a[href*="/user/logout"]`);
+logoutBtn?.addEventListener('click', () => toggleLoading(true));
+
+// ## Popup/Modals - LoginForm - Show/Close ##
 const loginForm = document.querySelector(`#loginForm`);
-const loginBtn = document.querySelector(`#login`);
 const closeLoginFormSel = document.querySelector(`.close-loginForm`);
 const closeLoginForm = () => {
   closePopup(loginForm);
-  // This may affect UX.
-  window.location.reload();
+  refreshPage(0); // This may affect UX.
 };
 blurOverlay.addEventListener('click', closeLoginForm);
 closeLoginFormSel?.addEventListener('click', closeLoginForm);
-loginBtn?.addEventListener('click', async () => {
-  blurOverlay.classList.remove('hide');
-  loading.classList.remove('hide');
+retryBtn?.addEventListener('click', () => {
+  refreshPage(0);
+});
+document.querySelector(`#login`)?.addEventListener('click', async () => {
+  toggleLoading(true);
   try {
-    const resp = await fetchHelper('/user/login');
+    const resp = await fetchData('/user/login');
     if (resp.status === 200) {
-      loading.classList.add('hide');
-      loginForm.classList.remove('hide');
+      hideElement(loading);
+      showElement(loginForm);
     } else {
-      loading.innerText = 'Something went wrong! Please try again.';
+      loading.innerText = GENERIC_ERR;
+      showElement(retryBtn);
     }
   } catch (err) {
-    loading.innerText = 'Something went wrong! Please try again.';
+    loading.innerText = GENERIC_ERR;
+    showElement(retryBtn);
   }
 });
-const logoutBtn = document.querySelector(`a[href*="/user/logout"]`);
-logoutBtn?.addEventListener('click', () => loading.classList.remove('hide'));
 
 // ################################################################################################################################
 // ## Popup/Modals - LoginForm - CTAs ##
-const continueBtn = document.querySelector(`[value="CONTINUE"]`);
-const setContinueBtnState = (state = '') => {
-  if (!state || state === 'LOGIN') {
-    continueBtn.value = state || 'CONTINUE';
-    continueBtn.style.backgroundColor = 'var(--primary-color)';
-    return;
-  }
-  continueBtn.value = state;
-  continueBtn.classList.add('loading');
-};
+const continueBtn = document.querySelector(`#login-btn`);
 const setError = (sel, msg) => {
-  sel.classList.remove('hide');
+  showElement(sel);
   sel.innerText = msg;
 };
 const unSetError = sel => {
-  sel.classList.add('hide');
+  hideElement(sel);
   sel.innerText = '';
 };
 const loginId = document.querySelector('#loginId');
@@ -169,6 +203,7 @@ const password = document.querySelector('#password');
 const passwordErr = document.querySelector('#passwordErr');
 const passwordDiv = document.querySelector('#passwordDiv');
 const isUsingPWSel = document.querySelector(`#pwlogin`);
+let isUsingPW, loginIdOk;
 isUsingPWSel?.addEventListener('click', () => {
   if (isUsingPW) {
     isUsingPWSel.innerHTML = '<small>Login using Password?</small>';
@@ -186,26 +221,18 @@ isUsingPWSel?.addEventListener('click', () => {
 });
 const loginErr = (sel, inputSel, errMsg = '') => {
   setError(sel, errMsg || `Couldn't sent OTP. Please try again!`);
-  setContinueBtnState();
+  setBtnState(continueBtn, 'RETRY');
   continueBtn.disabled = false;
   inputSel.disabled = false;
 };
-const getCookie = cookieType => {
-  const regxPattern = new RegExp(String.raw`${cookieType}=`);
-  return document.cookie
-    ?.split('; ')
-    ?.filter(c => regxPattern.test(c))?.[0]
-    ?.split('=')?.[1];
-};
-
 const login = async () => {
+  unSetError(passwordErr);
   password.disabled = true;
   continueBtn.disabled = true;
-  unSetError(passwordErr);
-  setContinueBtnState('Logging in...');
+  setBtnState(continueBtn, 'Logging in...', 'loading');
   try {
     const ct = getCookie('ct');
-    const resp = await fetchHelper(
+    const resp = await fetchData(
       '/user/verify',
       'POST',
       { userId: loginId.value, passkey: password.value, ct },
@@ -219,25 +246,29 @@ const login = async () => {
       case 400:
       case 422:
       case 403:
+        continueBtn.disabled = false;
+        setBtnState(continueBtn, 'LOGIN');
         loginErr(passwordErr, password, resp.userMessage);
         break;
       case 200:
-        isUsingPWSel.classList.add('hide');
+        hideElement(isUsingPWSel);
         // closeLoginFormSel.removeEventListener('click', closeLoginForm);
-        closeLoginFormSel.remove();
-        setContinueBtnState('Just a sec...');
-        continueBtn.style.backgroundColor = '#34A853';
-        window.location.reload();
+        // closeLoginFormSel.remove();
+        setBtnState(continueBtn, 'Just a sec...', 'success');
+        refreshPage();
         break;
       default:
+        continueBtn.disabled = false;
+        setBtnState(continueBtn, 'LOGIN');
         loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');
         break;
     }
   } catch (err) {
+    continueBtn.disabled = false;
+    setBtnState(continueBtn, 'LOGIN');
     loginErr(passwordErr, password, 'Oops. something went wrong!');
   }
 };
-let isUsingPW, loginIdOk;
 continueBtn?.addEventListener('click', async () => {
   blurOverlay.removeEventListener('click', closeLoginForm);
   if (loginId.value?.length !== 10 || isNaN(loginId.value) || !new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
@@ -270,11 +301,11 @@ continueBtn?.addEventListener('click', async () => {
     loginIdOk = true;
     unSetError(loginIdErr);
     loginId.disabled = true;
-    setContinueBtnState('Sending OTP...');
+    setBtnState(continueBtn, 'Sending OTP...', 'loading');
     continueBtn.disabled = true;
     try {
       const ct = getCookie('ct');
-      const resp = await fetchHelper(
+      const resp = await fetchData(
         '/user/auth',
         'POST',
         { userId: loginId.value, ct },
@@ -284,6 +315,7 @@ continueBtn?.addEventListener('click', async () => {
           credentials: 'include'
         }
       );
+      setBtnState(continueBtn, 'LOGIN');
       switch (resp.status) {
         case 400:
         case 422:
@@ -291,11 +323,9 @@ continueBtn?.addEventListener('click', async () => {
           loginErr(loginIdErr, loginId, resp.userMessage);
           break;
         case 200:
-          passwordDiv.classList.remove('hide');
-          isUsingPWSel.classList.remove('hide');
+          showElement(passwordDiv);
+          showElement(isUsingPWSel);
           isUsingPWSel.style.cursor = 'pointer';
-          continueBtn.disabled = false;
-          setContinueBtnState('LOGIN');
           break;
         default:
           loginErr(loginIdErr, loginId, resp.userMessage || '');
@@ -303,6 +333,9 @@ continueBtn?.addEventListener('click', async () => {
       }
     } catch (err) {
       loginErr(loginIdErr, loginId);
+    } finally {
+      continueBtn.disabled = false;
+      setBtnState(continueBtn, 'CONTINUE');
     }
   }
 });
@@ -365,7 +398,7 @@ const updateProfile = async () => {
     if (!err && Object.keys(itemsToBeUpdated).length) {
       const ct = getCookie('ct');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchHelper('/user/profile', 'POST', itemsToBeUpdated, {
+      const resp = await fetchData('/user/profile', 'POST', itemsToBeUpdated, {
         'Content-Type': 'application/json',
         'X-XSRF-TOKEN': ct,
         credentials: 'include'
@@ -574,7 +607,7 @@ saveAddrBtn?.addEventListener('click', async () => {
     try {
       const ct = getCookie('ct');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchHelper('/user/address', 'POST', itemsToBeUpdated, {
+      const resp = await fetchData('/user/address', 'POST', itemsToBeUpdated, {
         'Content-Type': 'application/json',
         'X-XSRF-TOKEN': ct,
         credentials: 'include'
@@ -589,9 +622,7 @@ saveAddrBtn?.addEventListener('click', async () => {
           // Show success popup & reload page.
           loading.innerText = 'Address Saved!';
           ok = true;
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          refreshPage();
           break;
         default:
           if (resp.validationErrors) {
