@@ -1,4 +1,4 @@
-import { GENDER_ARR } from './types.js';
+import { GENDER_ARR, ADDRESS_TYPE_ARR } from './types.js';
 
 abstract class InputValidator {
   public static readonly validateMobileNumber = mobileNum => {
@@ -22,9 +22,23 @@ abstract class InputValidator {
     return GENDER_ARR.some(gen => gen === gender);
   };
 
+  public static readonly validateAddrType = addr => {
+    return ADDRESS_TYPE_ARR.some(addrType => addrType === addr);
+  };
+
   public static readonly validatePassword = pw => {
     const regxPattern = new RegExp(/^[A-Za-z0-9_!@#$^./&+-]*$/);
     return pw?.length >= 6 && regxPattern.test(pw);
+  };
+
+  public static readonly validatePincode = pc => {
+    const regxPattern = new RegExp(/^(\d{6})?$/);
+    return pc?.length === 6 && regxPattern.test(pc);
+  };
+
+  public static readonly validateAddress = addr => {
+    const regxPattern = new RegExp(/^[A-Za-z0-9 .\(.*\)\/@#&,-]*$/);
+    return addr && regxPattern.test(addr);
   };
 }
 

@@ -80,6 +80,7 @@ ul {
 a {
   text-decoration: none;
   color: inherit;
+  cursor: pointer !important;
 }
 input {
   background-color: var(--ash);
@@ -383,7 +384,7 @@ main * {
   margin-right: -30px;
 }
 #loginForm input {
-  margin: 20px;
+  margin: 20px auto;
   min-width: 167px;
   margin-bottom: 0px;
   cursor: pointer;
@@ -405,7 +406,12 @@ main * {
   margin-top: 8px;
 }
 #loginForm .err {
-  margin: 0 18px;
+  margin: 6px 18px;
+}
+#loginForm #pwlogin {
+  margin-top: 10px;
+  cursor: pointer;
+  color: var(--fine-grey);
 }
 
 /* User Profile/Address Page */
@@ -434,7 +440,7 @@ main * {
 .profileForm .addressForm {
   border: 1px solid var(--light-grey);
   margin-left: 0;
-  display: none; /*inline-grid;*/
+  display: inline-grid;
   width: 100%;
 }
 .profileForm .addressForm input {
@@ -476,9 +482,7 @@ main * {
   border-radius: 6px;
 }
 .profileForm .address.default {
-  color: var(--dark);
-  font-weight: 600;
-  box-shadow: rgba(99, 99, 99, 1) 0px 2px 8px 0px;
+  box-shadow: var(--shadow);
 }
 .profileForm .address a {
   color: var(--primary-color);

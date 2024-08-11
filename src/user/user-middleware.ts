@@ -14,7 +14,7 @@ class UserMiddleware {
         }
         res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
         const dbConn = res.locals.DB_CONN[dbInstance];
-        const userAddresses = await this.getUserAddresses(req.session.user.id, dbConn);
+        const userAddresses = await this.getUserAddresses(dbConn, req.session.user.id);
         await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
         LOGGER.info(`DB connection ${dbInstance} Released!`);
         req.session.user.allAddresses = userAddresses;
@@ -107,7 +107,7 @@ class UserMiddleware {
           }
           res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
           const dbConn = res.locals.DB_CONN[dbInstance];
-          const result = await this.updateUser(req.session.user.id, dbConn, dataTobeUpdated);
+          const result = await this.updateUser(dbConn, dataTobeUpdated, req.session.user.id);
           await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
           LOGGER.info(`DB connection ${dbInstance} Released!`);
           if (result?.affectedRows) {
@@ -120,10 +120,11 @@ class UserMiddleware {
               userMessage: `Updated Successfully!`
             });
           } else {
-            res.json({
-              status: 500,
-              userMessage: `Something went wrong!`
-            });
+            throw new BaseError(`ERR_PROFILE_UPDATE_FAILED`);
+            // res.json({
+            //   status: 500,
+            //   userMessage: `Something went wrong!`
+            // });
           }
         } else {
           res.json({
@@ -145,29 +146,98 @@ class UserMiddleware {
 
   public async updateAddress(req: Request, res: Response, next: NextFunction) {
     try {
+      const validationErrors: any = {};
       if (req.session?.user?.isAuthenticated) {
-        const {
-          addrName = '',
-          addrMobile = '',
-          addrLine1 = '',
-          addrLine2 = '',
-          addrPincode = '',
-          addrType = '',
-          id = '',
-          ct = ''
-        } = req.body;
+        let { addrName = '', addrLine1 = '', addrLine2 = '' } = req.body;
+        const { addrMobile = '', addrPincode = '', addrType = '', id = '', ct = '' } = req.body;
         if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
           throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
         }
-        if (id) {
-          // Update
+        const dataTobeUpdated: any = {};
+        // Input Validations
+        addrName = addrName.trim();
+        if (addrName && InputValidator.validateName(addrName)) {
+          dataTobeUpdated.name = addrName;
         } else {
-          // Add
+          validationErrors.addrNameErr = 'Invalid Name';
         }
-        res.json({
-          status: 200,
-          userMessage: `Yo Yo`
+        if (addrMobile && InputValidator.validateMobileNumber(addrMobile)) {
+          dataTobeUpdated.mobile = addrMobile;
+        } else {
+          validationErrors.addrMobileErr = 'Invalid Mobile Number';
+        }
+        if (addrPincode && InputValidator.validatePincode(addrPincode)) {
+          dataTobeUpdated.pincode = addrPincode;
+        } else {
+          validationErrors.addrPincodeErr = 'Invalid Pincode';
+        }
+        if (addrType && InputValidator.validateAddrType(addrType)) {
+          dataTobeUpdated.addressType = addrType;
+        } else {
+          validationErrors.addrTypeErr = 'Please select address type';
+        }
+        [addrLine1, addrLine2] = [addrLine1, addrLine2].map(addTxt => addTxt.trim());
+        dataTobeUpdated.addressText = '';
+        [addrLine1, addrLine2].forEach((addrTxt, i) => {
+          if (addrTxt && InputValidator.validateAddress(addrTxt)) {
+            // dataTobeUpdated[`addrLine${i}`] = addrTxt;
+            dataTobeUpdated.addressText += addrTxt + ' ';
+          } else {
+            validationErrors[`addrLine${i}Err`] = 'Invalid address text';
+          }
         });
+        if (Object.keys(validationErrors).length) {
+          res.json({
+            status: 422,
+            validationErrors
+          });
+        } else if (Object.keys(dataTobeUpdated).length === 5) {
+          dataTobeUpdated.addressText = dataTobeUpdated.addressText.trim();
+          const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
+          if (!dbInstance) {
+            throw new BaseError('DB_INSTANCE_NOT_FOUND');
+          }
+          res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
+          const dbConn = res.locals.DB_CONN[dbInstance];
+          if (id) {
+            // Update
+            const result = await this.updateUserAddress(dbConn, dataTobeUpdated, req.session?.user?.id, id);
+            await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
+            LOGGER.info(`DB connection ${dbInstance} Released!`);
+            if (!result?.affectedRows) {
+              throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
+              // res.json({
+              //   status: 500,
+              //   userMessage: `Something went wrong!`
+              // });
+            }
+            // Update session.
+            const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
+            Object.entries(dataTobeUpdated).forEach(([k, v]) => {
+              req.session.user.allAddresses[i][k] = v;
+            });
+            res.json({
+              status: 200,
+              userMessage: `Address Updated!`
+            });
+          } else {
+            // Add
+            dataTobeUpdated['user_id'] = req.session?.user?.id;
+            const result = await this.insertUserAddress(dbConn, dataTobeUpdated);
+            await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
+            LOGGER.info(`DB connection ${dbInstance} Released!`);
+            if (!result?.insertId) {
+              throw new BaseError(`ERR_COULDNT_SAVE_USER`);
+            }
+            // delete dataTobeUpdated['user_id'];
+            // Update session
+            req.session.user.allAddresses.push(dataTobeUpdated);
+            res.json({
+              status: 201,
+              userMessage: `Address Saved!`
+            });
+          }
+        }
       } else {
         res.redirect('index');
       }
@@ -180,7 +250,102 @@ class UserMiddleware {
     }
   }
 
-  private async getUserAddresses(userId, dbConn) {
+  public async deleteAddress(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (req.session?.user?.isAuthenticated) {
+        const { id = '', ct = '' } = req.body;
+        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
+          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
+        }
+        if (!id || isNaN(id)) {
+          throw new BaseError(`ERR_ADDRESS_DELETE_FAILED`);
+        }
+        // Delete
+        const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
+        if (!dbInstance) {
+          throw new BaseError('DB_INSTANCE_NOT_FOUND');
+        }
+        res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
+        const dbConn = res.locals.DB_CONN[dbInstance];
+        const result = await this.deleteUserAddress(dbConn, req.session.user.id, id);
+        await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
+        LOGGER.info(`DB connection ${dbInstance} Released!`);
+        LOGGER.info(JSON.stringify(result));
+        if (result?.affectedRows) {
+          // Update session.
+          const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
+          req.session.user.allAddresses.splice(i, 1);
+          res.json({
+            status: 200,
+            userMessage: `Address Removed!`
+          });
+        } else {
+          throw new BaseError(`ERR_ADDRESS_DELETE_FAILED`);
+          // res.json({
+          //   status: 500,
+          //   userMessage: `Something went wrong!`
+          // });
+        }
+      } else {
+        res.redirect('index');
+      }
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+      }
+    }
+  }
+
+  public async setDefaultAddress(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (req.session?.user?.isAuthenticated) {
+        const { id = '', ct = '' } = req.body;
+        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
+          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
+        }
+        if (!id || isNaN(id)) {
+          throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
+        }
+        // Update user - Set Default Address
+        const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
+        if (!dbInstance) {
+          throw new BaseError('DB_INSTANCE_NOT_FOUND');
+        }
+        res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
+        const dbConn = res.locals.DB_CONN[dbInstance];
+        const result = await this.setUserDefaultAddress(dbConn, req.session.user.id, id);
+        await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
+        LOGGER.info(`DB connection ${dbInstance} Released!`);
+        if (result?.affectedRows) {
+          // update session
+          req.session.user.defaultBillingAddress = Number(id);
+          req.session.user.defaultShippingAddress = Number(id);
+          res.json({
+            status: 200,
+            userMessage: `Updated Successfully!`
+          });
+        } else {
+          throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
+          // res.json({
+          //   status: 500,
+          //   userMessage: `Something went wrong!`
+          // });
+        }
+      } else {
+        res.redirect('index');
+      }
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+      }
+    }
+  }
+
+  private async getUserAddresses(dbConn, userId) {
     try {
       const [rows] = await dbConn.execute(
         'SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `address` WHERE `user_id` = ?;',
@@ -193,7 +358,7 @@ class UserMiddleware {
     }
   }
 
-  private async updateUser(userId, dbConn, updateObj) {
+  private async updateUser(dbConn, updateObj, userId) {
     try {
       let updateStr = ``;
       const queryParams = [];
@@ -208,12 +373,125 @@ class UserMiddleware {
       updateStr = updateStr?.slice(0, -1); // remove the last ','
       if (updateStr) {
         const [result] = await dbConn.execute(`UPDATE user SET ${updateStr} WHERE id = ?;`, [...queryParams, userId]);
+        // eslint-disable-next-line
         return result as any;
       } else {
         return false;
       }
     } catch (err) {
       throw new BaseError(`DB_QUERY_ERR`, err.message);
+    }
+  }
+
+  private async updateUserAddress(dbConn, updateObj, userId, addrId) {
+    try {
+      let updateStr = ``;
+      const queryParams = [];
+      for (const [field, val] of Object.entries(updateObj)) {
+        queryParams.push(val);
+        if (field === 'addressText') {
+          updateStr += `address_text = ?,`;
+        } else if (field === 'addressType') {
+          updateStr += `address_type = ?,`;
+        } else {
+          updateStr += `${field} = ?,`;
+        }
+      }
+      updateStr = updateStr?.slice(0, -1); // remove the last ','
+      if (updateStr) {
+        const [result] = await dbConn.execute(`UPDATE address SET ${updateStr} WHERE id = ? AND user_id = ?;`, [
+          ...queryParams,
+          addrId,
+          userId
+        ]);
+        // eslint-disable-next-line
+        return result as any;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      throw new BaseError(`DB_QUERY_ERR`, err.message);
+    }
+  }
+
+  private async insertUserAddress(dbConn, updateObj) {
+    try {
+      const queryParams = [];
+      let fields = '';
+      for (const [field, val] of Object.entries(updateObj)) {
+        if (field === 'addressText') {
+          updateObj['address_text'] = val;
+          delete updateObj[field];
+          queryParams.push(val);
+          fields += `address_text ,`;
+          continue;
+        } else if (field === 'addressType') {
+          updateObj['address_type'] = val;
+          delete updateObj[field];
+          queryParams.push(val);
+          fields += `address_type ,`;
+          continue;
+        }
+        queryParams.push(val);
+        fields += `${field} ,`;
+      }
+      fields = fields.slice(0, -1); // remove the last ','
+      const placeholders = '?,'.repeat(Object.keys(updateObj).length).slice(0, -1); // remove the last ','
+      if (fields) {
+        const stmt = `INSERT INTO address (${fields}) VALUES (${placeholders}) ;`;
+        const [result] = await dbConn.execute(stmt, queryParams);
+        // eslint-disable-next-line
+        return result as any;
+      } else {
+        return false;
+      }
+    } catch (err) {
+      throw new BaseError(`DB_QUERY_ERR`, err.message);
+    }
+  }
+
+  private async deleteUserAddress(dbConn, userId, addrId) {
+    try {
+      // first check if its not the default address
+      const [chk] = await dbConn.execute(
+        `SELECT id FROM user WHERE default_billing_addr = ? OR default_shipping_addr = ? `,
+        [addrId, addrId]
+      );
+      if (chk?.[0]?.id) {
+        // address is used as default shipping/billing.
+        throw new BaseError(`ADDRESS_IN_USE_CANT_DELETE`);
+      }
+      const stmt = `DELETE FROM address WHERE user_id = ? AND id = ? ;`;
+      const [result] = await dbConn.execute(stmt, [userId, addrId]);
+      // eslint-disable-next-line
+      return result as any;
+    } catch (err) {
+      if (err instanceof BaseError) {
+        throw err;
+      } else {
+        throw new BaseError(`DB_QUERY_ERR`, err.message);
+      }
+    }
+  }
+
+  private async setUserDefaultAddress(dbConn, userId, addrId) {
+    try {
+      // chk if address id exists in address table.
+      const [chk] = await dbConn.execute(`SELECT id FROM address WHERE id = ? `, [addrId]);
+      if (!chk?.[0]?.id) {
+        // address id doesn't exist in address table. Cant set as default.
+        throw new BaseError(`ADDRESS_NOT_EXISTS_CANT_SET_DEFAULT`);
+      }
+      const stmt = `UPDATE user SET default_shipping_addr = ?, default_billing_addr = ? WHERE id = ? ;`;
+      const [result] = await dbConn.execute(stmt, [addrId, addrId, userId]);
+      // eslint-disable-next-line
+      return result as any;
+    } catch (err) {
+      if (err instanceof BaseError) {
+        throw err;
+      } else {
+        throw new BaseError(`DB_QUERY_ERR`, err.message);
+      }
     }
   }
 }

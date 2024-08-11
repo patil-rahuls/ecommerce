@@ -96,10 +96,35 @@ export const ERROR_CODES = {
     status: 500,
     message: `Failed in Profile page`
   },
+  ERR_PROFILE_UPDATE_FAILED: {
+    status: 500,
+    message: `Could not save/update Profile info`,
+    userMessage: `Something went wrong!`
+  },
+  ERR_ADDR_UPDATE_FAILED: {
+    status: 500,
+    message: `Could not save/update user address`,
+    userMessage: `Something went wrong!`
+  },
   ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT: {
     status: 400,
     message: `Profile edit attempted without preSessionId OR expired/missing CSRF token`,
     userMessage: `Please try again!`
+  },
+  ADDRESS_IN_USE_CANT_DELETE: {
+    status: 400,
+    message: `Given address is a default shipping/billing address, hence can't be deleted`,
+    userMessage: `Can't remove default address!`
+  },
+  ERR_ADDRESS_DELETE_FAILED: {
+    status: 500,
+    message: `Could not delete user address`,
+    userMessage: `Something went wrong!`
+  },
+  ADDRESS_NOT_EXISTS_CANT_SET_DEFAULT: {
+    status: 500,
+    message: `Could not set address as default as the address doesn't exist.`,
+    userMessage: `Something went wrong!`
   },
 
   // DB

@@ -78,37 +78,43 @@
     <button id="add-address" class="btn btn-primary add-address">Add new</button>
   </h2>
   <div class="profileForm">
-    <div class="addressForm">
+    <div class="addressForm hide">
       <input name="addrId" class="hide" value="" />
       <input name="addrName" placeholder="Contact Name (Required)*" />
-      <span class="addrNameErr err hide">Invalid Name</span>
+      <span id="addrNameErr" class="err hide">Invalid Name</span>
 
       <input name="addrMobile" placeholder="Phone Number (Required)*" />
-      <span class="addrMobileErr err hide">Invalid Mobile Number</span>
+      <span id="addrMobileErr" class="err hide">Invalid Mobile Number</span>
 
       <input name="addrLine1" class="addr" placeholder="House No. Bldg Name (Required)*" />
-      <span class="addrLine1Err err hide">Invalid Address</span>
+      <span id="addrLine1Err" class="err hide">Invalid Address</span>
 
       <input name="addrLine2" class="addr" placeholder="City/Town, State (Required)*" />
-      <span class="addrLine2Err err hide">Invalid Address</span>
+      <span id="addrLine2Err" class="err hide">Invalid Address</span>
 
       <input name="addrPincode" placeholder="Pincode (Required)*" />
-      <span class="addrPincodeErr err hide">Invalid Pincode</span>
+      <span id="addrPincodeErr" class="err hide">Invalid Pincode</span>
 
       <div id="addr-type">
         <label class="Home"><input type="radio" value="Home" name="addrType" /><span>Home</span></label>
         <label class="Work"><input type="radio" value="Work" name="addrType" /><span>Work</span></label>
       </div>
-      <span class="addrTypeErr err hide">Please choose Address-Type</span>
+      <span id="addrTypeErr" class="err hide">Please choose Address-Type</span>
       <input name="saveAddr" type="button" class="btn-primary-solid" value="Save" />
-      <span class="addrUpdateErr err hide">Something went wrong!</span>
+      <span id="addrUpdateErr" class="err hide">Something went wrong!</span>
       <input name="cancelAddr" type="button" class="btn-primary" value="Cancel" />
     </div>
     <table>
       <tbody>
         <tr>
-          <% if(data?.allAddresses?.length) { data.allAddresses.forEach(addr => { const isDefault = (addr.id ===
-          data.defaultShippingAddress); let tdClass=''; if(isDefault){ tdClass = 'default'; } %>
+          <% if(data?.allAddresses?.length) { 
+            data.allAddresses.forEach(addr => { 
+              const isDefault = (Number(addr.id) === Number(data.defaultShippingAddress)); 
+              let tdClass='';
+              if(isDefault){
+                tdClass = 'default';
+              }
+          %>
           <td class="address <%= tdClass %>">
             <div>
               <span class="address-type"><%= addr.addressType %></span>
@@ -125,8 +131,8 @@
             </div>
             <br />
             <a class="editAddr">Edit</a>
-            <a class="delAddr">Remove</a>
             <% if(!isDefault) { %>
+              <a class="delAddr">Remove</a>
             <a class="defAddr">Set as Default</a>
             <% } %>
           </td>

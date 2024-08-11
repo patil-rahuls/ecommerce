@@ -6,7 +6,7 @@ const fetchData = async (url, method = 'GET', data = '', headers = '') => {
     const res = await fetch(url, {
       method,
       headers: headers ? headers : { 'Content-Type': 'application/json' },
-      ...(method === 'POST' && { body: JSON.stringify(data) })
+      ...(['PUT', 'POST', 'DELETE'].some(m => m === method) && { body: JSON.stringify(data) })
     });
     return await res.json();
   } catch (err) {
@@ -16,7 +16,7 @@ const fetchData = async (url, method = 'GET', data = '', headers = '') => {
     };
   }
 };
-const refreshPage = (delay = 2000) => {
+const refreshPage = (delay = 1000) => {
   setTimeout(() => {
     window.location.reload();
   }, delay);
@@ -206,13 +206,13 @@ const isUsingPWSel = document.querySelector(`#pwlogin`);
 let isUsingPW, loginIdOk;
 isUsingPWSel?.addEventListener('click', () => {
   if (isUsingPW) {
-    isUsingPWSel.innerHTML = '<small>Login using Password?</small>';
+    isUsingPWSel.innerHTML = '<b>Login using Password?</b>';
     password.setAttribute('placeholder', 'OTP');
     password.value = '';
     isUsingPW = false;
     unSetError(passwordErr);
   } else {
-    isUsingPWSel.innerHTML = '<small>Login using OTP?</small>';
+    isUsingPWSel.innerHTML = '<b>Login using OTP?</b>';
     password.setAttribute('placeholder', 'Password');
     password.value = '';
     isUsingPW = true;
@@ -221,7 +221,7 @@ isUsingPWSel?.addEventListener('click', () => {
 });
 const loginErr = (sel, inputSel, errMsg = '') => {
   setError(sel, errMsg || `Couldn't sent OTP. Please try again!`);
-  setBtnState(continueBtn, 'RETRY');
+  setBtnState(continueBtn, 'LOGIN');
   continueBtn.disabled = false;
   inputSel.disabled = false;
 };
@@ -252,8 +252,8 @@ const login = async () => {
         break;
       case 200:
         hideElement(isUsingPWSel);
-        // closeLoginFormSel.removeEventListener('click', closeLoginForm);
-        // closeLoginFormSel.remove();
+        closeLoginFormSel.removeEventListener('click', closeLoginForm);
+        closeLoginFormSel.remove();
         setBtnState(continueBtn, 'Just a sec...', 'success');
         refreshPage();
         break;
@@ -325,7 +325,6 @@ continueBtn?.addEventListener('click', async () => {
         case 200:
           showElement(passwordDiv);
           showElement(isUsingPWSel);
-          isUsingPWSel.style.cursor = 'pointer';
           break;
         default:
           loginErr(loginIdErr, loginId, resp.userMessage || '');
@@ -342,7 +341,6 @@ continueBtn?.addEventListener('click', async () => {
 
 // ################################################################################################################################
 // ## User Profile ##
-let err;
 const rePwTr = document.querySelector('#re-password');
 const changePwLink = document.querySelector(`#changePassword`);
 const profilePassword = document.querySelector('input[name="password"]');
@@ -350,52 +348,54 @@ const profileRePassword = document.querySelector('input[name="repassword"]');
 const profileName = document.querySelector(`input[name="name"]`);
 const profileEmail = document.querySelector(`input[name="email"]`);
 const profileGender = document.querySelector(`select[name="gender"]`);
+// errors
+const nameErr = document.querySelector(`#nameErr`);
+const emailErr = document.querySelector(`#emailErr`);
+const genderErr = document.querySelector(`#genderErr`);
+const profilePasswordErr = document.querySelector(`#profilePasswordErr`);
+const profileRePasswordErr = document.querySelector(`#profileRePasswordErr`);
+const profileUpdateErr = document.querySelector(`#profileUpdateErr`);
 const updateProfileBtn = document.querySelector('#update-profile');
 changePwLink?.addEventListener('click', function () {
-  changePwLink.classList.add('hide');
-  rePwTr.classList.remove('hide');
-  profilePassword.classList.remove('hide');
+  hideElement(changePwLink);
+  showElement(profilePassword);
+  showElement(rePwTr);
 });
 const itemsToBeUpdated = {};
-const showProfileUpdateErrors = (sel, msg) => {
-  const errParent = document.querySelector(`#${sel}`);
-  errParent.classList.remove('hide');
-  errParent.querySelector('span').innerText = msg;
-  err = true;
-};
 const resetProfileUpdateErrors = () => {
-  [`#nameErr`, `#emailErr`, `#genderErr`, `#profilePasswordErr`, `#profileRePasswordErr`, `#profileUpdateErr`].forEach(
-    sel => {
-      const errParent = document.querySelector(sel);
-      errParent.querySelector('span').innerText = '';
-      if (!errParent.classList.contains('hide')) {
-        errParent.classList.add('hide');
-      }
-      err = false;
-    }
-  );
+  [nameErr, emailErr, genderErr, profilePasswordErr, profileRePasswordErr, profileUpdateErr].forEach(sel => {
+    sel.querySelector('span').innerText = '';
+    hideElement(sel);
+    err = false;
+  });
+};
+const showProfileUpdateErrors = (errSel, msg) => {
+  showElement(errSel);
+  errSel.querySelector('span').innerText = msg;
 };
 const disableProfileForm = disabledState => {
-  changePwLink.disabled = disabledState;
-  profilePassword.disabled = disabledState;
-  profileRePassword.disabled = disabledState;
-  profileName.disabled = disabledState;
-  profileEmail.disabled = disabledState;
-  profileGender.disabled = disabledState;
-  updateProfileBtn.disabled = disabledState;
-  loading.classList.toggle('hide');
-  blurOverlay.classList.toggle('hide');
-  updateProfileBtn.classList.toggle('loading');
+  [
+    changePwLink,
+    profilePassword,
+    profileRePassword,
+    profileName,
+    profileEmail,
+    profileGender,
+    updateProfileBtn
+  ].forEach(el => (el.disabled = disabledState));
   if (disabledState) {
-    updateProfileBtn.innerText = 'Updating...';
+    showElement(loading);
+    showElement(blurOverlay);
     return;
   }
-  updateProfileBtn.innerText = 'Update';
+  hideElement(loading);
+  hideElement(blurOverlay);
 };
 const updateProfile = async () => {
+  let ok;
   disableProfileForm(true);
   try {
-    if (!err && Object.keys(itemsToBeUpdated).length) {
+    if (Object.keys(itemsToBeUpdated).length) {
       const ct = getCookie('ct');
       itemsToBeUpdated.ct = ct;
       const resp = await fetchData('/user/profile', 'POST', itemsToBeUpdated, {
@@ -404,50 +404,62 @@ const updateProfile = async () => {
         credentials: 'include'
       });
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
+      if (resp.validationErrors) {
+        Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
+          showProfileUpdateErrors(document.querySelector(`#${sel}`), errMsg);
+        });
+      }
       switch (resp.status) {
         case 200:
         case 304:
-          document.querySelector(`#profileUpdateErr`).classList.remove('err');
-          document.querySelector(`#profileUpdateErr`).classList.add('success');
-          showProfileUpdateErrors('profileUpdateErr', resp.userMessage);
+          if (!resp.validationErrors) {
+            // profileUpdateErr.classList.remove('err');
+            // profileUpdateErr.classList.add('success');
+            // showProfileUpdateErrors(profileUpdateErr, resp.userMessage);
+            // Show success popup & reload page.
+            loading.classList.add('success');
+            loading.innerText = resp.userMessage;
+            ok = true;
+            refreshPage();
+          }
           break;
         default:
-          if (resp.validationErrors) {
-            Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
-              showProfileUpdateErrors(sel, errMsg);
-            });
-          } else {
-            showProfileUpdateErrors('profileUpdateErr', resp.userMessage || 'Something went wrong!');
+          if (!resp.validationErrors) {
+            showProfileUpdateErrors(profileUpdateErr, resp.userMessage || 'Something went wrong!');
           }
           break;
       }
     }
   } catch (err) {
-    showProfileUpdateErrors('profileUpdateErr', 'Something went wrong!');
+    showProfileUpdateErrors(profileUpdateErr, 'Something went wrong!');
   }
-  disableProfileForm(false);
+  !ok && disableProfileForm(false);
 };
-updateProfileBtn?.addEventListener('click', async () => {
+const validateProfileInfo = () => {
+  let ok = true;
   resetProfileUpdateErrors();
   if (profileName.value) {
     if (validateName(profileName.value)) {
       itemsToBeUpdated.name = profileName.value;
     } else {
-      showProfileUpdateErrors('nameErr', `Invalid Name`);
+      showProfileUpdateErrors(nameErr, `Invalid Name`);
+      ok = false;
     }
   }
   if (profileEmail.value) {
     if (validateEmail(profileEmail.value)) {
       itemsToBeUpdated.email = profileEmail.value;
     } else {
-      showProfileUpdateErrors('emailErr', `Invalid Email ID`);
+      showProfileUpdateErrors(emailErr, `Invalid Email ID`);
+      ok = false;
     }
   }
   if (profileGender.value) {
     if (validateGender(profileGender.value)) {
       itemsToBeUpdated.gender = profileGender.value;
     } else {
-      showProfileUpdateErrors('genderErr', `Please select a Gender`);
+      showProfileUpdateErrors(genderErr, `Please select a Gender`);
+      ok = false;
     }
   }
   if (profilePassword.value) {
@@ -456,13 +468,20 @@ updateProfileBtn?.addEventListener('click', async () => {
         itemsToBeUpdated.password = profilePassword.value;
         itemsToBeUpdated.repassword = profileRePassword.value;
       } else {
-        showProfileUpdateErrors('profileRePasswordErr', `Passwords didn't match`);
+        showProfileUpdateErrors(profileRePasswordErr, `Passwords didn't match`);
+        ok = false;
       }
     } else {
-      showProfileUpdateErrors('profilePasswordErr', `Please try another one`);
+      showProfileUpdateErrors(profilePasswordErr, `Please try another one`);
+      ok = false;
     }
   }
-  await updateProfile();
+  return ok;
+};
+updateProfileBtn?.addEventListener('click', async () => {
+  if (validateProfileInfo()) {
+    await updateProfile();
+  }
 });
 
 // ################################################################################################################################
@@ -476,33 +495,38 @@ const addrMobile = document.querySelector(`input[name="addrMobile"]`);
 const addrName = document.querySelector(`input[name="addrName"]`);
 const addrType = document.querySelector(`input[name="addrType"]:checked`);
 const addrId = document.querySelector(`input[name="addrId"]`);
+// errors
+const addrTypeErr = document.querySelector('#addrTypeErr');
+const addrPincodeErr = document.querySelector('#addrPincodeErr');
+const addrMobileErr = document.querySelector('#addrMobileErr');
+const addrNameErr = document.querySelector('#addrNameErr');
+const addrLine1Err = document.querySelector('#addrLine1Err');
+const addrLine2Err = document.querySelector('#addrLine2Err');
+const addrUpdateErr = document.querySelector('#addrUpdateErr');
 const saveAddrBtn = document.querySelector(`input[name="saveAddr"]`);
 const cancelAddr = document.querySelector(`input[name="cancelAddr"]`);
 const editAddr = Array.from(document.querySelectorAll(`a.editAddr`));
-const delAddr = document.querySelector(`a.delAddr`);
-const defAddr = document.querySelector(`a.defAddr`);
-const showHideEl = (sel, prop) => {
-  sel.style.display = prop;
+const delAddr = Array.from(document.querySelectorAll(`a.delAddr`));
+const defAddr = Array.from(document.querySelectorAll(`a.defAddr`));
+const resetErrors = () => {
+  [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err, addrUpdateErr].forEach(sel =>
+    hideElement(sel)
+  );
 };
 addAddrBtn?.addEventListener('click', () => {
-  showHideEl(addrForm, 'inline-grid');
-  showHideEl(addAddrBtn, 'none');
+  showElement(addrForm, 'inline-grid');
+  hideElement(addAddrBtn);
 });
 const clearAddrForm = () => {
   ['Work', 'Home'].forEach(
     addrTypeValue => (document.querySelector(`input[name="addrType"][value="${addrTypeValue}"]`).checked = false)
   );
-  addrPincode.value = '';
-  addrMobile.value = '';
-  addrName.value = '';
-  addrLine1.value = '';
-  addrLine2.value = '';
-  addrId.value = '';
+  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId].forEach(el => (el.value = ''));
 };
 cancelAddr?.addEventListener('click', () => {
-  showHideEl(addrForm, 'none');
   clearAddrForm();
-  showHideEl(addAddrBtn, 'block');
+  hideElement(addrForm);
+  showElement(addAddrBtn);
 });
 const populateAddrForm = editAddrBtn => {
   const addrDiv = editAddrBtn.parentElement.querySelector('div');
@@ -514,78 +538,62 @@ const populateAddrForm = editAddrBtn => {
   const fullAddrText = addrDiv.querySelector('.address-text')?.innerText;
   // divide fullAddrText into two parts. addr line1 & line 2
   const quotient = Math.floor(fullAddrText?.split(' ')?.length / 2);
-  addrLine1.value = fullAddrText?.split(' ')?.slice(0, quotient)?.join();
-  addrLine2.value = fullAddrText?.split(' ')?.slice(quotient)?.join();
+  addrLine1.value = fullAddrText?.split(' ')?.slice(0, quotient)?.join(' ');
+  addrLine2.value = fullAddrText?.split(' ')?.slice(quotient)?.join(' ');
   addrId.value = addrDiv.querySelector('.address-id')?.innerText || '';
 };
 editAddr?.forEach(editAddrBtn => {
   editAddrBtn.addEventListener('click', () => {
-    showHideEl(addAddrBtn, 'none');
+    hideElement(addAddrBtn);
     // Populate addrForm with selected addr info
     populateAddrForm(editAddrBtn);
-    showHideEl(addrForm, 'inline-grid');
+    showElement(addrForm, 'inline-grid');
+    document.querySelector('#layout main:nth-child(2)').scrollIntoView();
   });
 });
-const resetErrors = () => {
-  document.querySelector('.addrTypeErr').classList.add('hide');
-  document.querySelector('.addrPincodeErr').classList.add('hide');
-  document.querySelector('.addrMobileErr').classList.add('hide');
-  document.querySelector('.addrNameErr').classList.add('hide');
-  document.querySelector('.addrLine1Err').classList.add('hide');
-  document.querySelector('.addrLine2Err').classList.add('hide');
-  document.querySelector('.addrUpdateErr').classList.add('hide');
-};
 const validateAddr = () => {
   let ok = true;
   const addrType = document.querySelector(`input[name="addrType"]:checked`);
-  if (!['Home', 'Work'].find(t => t === addrType.value)) {
-    document.querySelector('.addrTypeErr').classList.remove('hide');
+  if (!addrType || (addrType && !['Home', 'Work'].find(t => t === addrType.value))) {
+    showElement(addrTypeErr);
     ok = false;
   }
   if (!validatePincode(addrPincode.value)) {
-    document.querySelector('.addrPincodeErr').classList.remove('hide');
+    showElement(addrPincodeErr);
     ok = false;
   }
   if (!validateMobileNumber(addrMobile.value)) {
-    document.querySelector('.addrMobileErr').classList.remove('hide');
+    showElement(addrMobileErr);
     ok = false;
   }
   if (!validateName(addrName.value)) {
-    document.querySelector('.addrNameErr').classList.remove('hide');
+    showElement(addrNameErr);
     ok = false;
   }
   if (!validateAddress(addrLine1.value)) {
-    document.querySelector('.addrLine1Err').classList.remove('hide');
+    showElement(addrLine1Err);
     ok = false;
   }
   if (!validateAddress(addrLine2.value)) {
-    document.querySelector('.addrLine2Err').classList.remove('hide');
+    showElement(addrLine2Err);
     ok = false;
   }
   return ok;
 };
 const disableAddrForm = disabledState => {
-  addrLine1.disabled = disabledState;
-  addrLine2.disabled = disabledState;
-  addrPincode.disabled = disabledState;
-  addrMobile.disabled = disabledState;
-  addrName.disabled = disabledState;
   // addrType?.disabled = disabledState;
-  saveAddrBtn.disabled = disabledState;
-  cancelAddr.disabled = disabledState;
-  loading.classList.toggle('hide');
-  blurOverlay.classList.toggle('hide');
-  saveAddrBtn.classList.toggle('loading');
+  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId, saveAddrBtn, cancelAddr].forEach(
+    el => (el.disabled = disabledState)
+  );
   if (disabledState) {
-    saveAddrBtn.innerText = 'Saving...';
+    showElement(loading);
+    showElement(blurOverlay);
+    // setBtnState(saveAddrBtn, 'Saving...', 'loading');
     return;
   }
-  saveAddrBtn.innerText = 'Save';
-};
-const showAddrUpdateErrors = (sel, errMsg) => {
-  const el = document.querySelector(sel);
-  el.classList.remove('hide');
-  el.innerText = errMsg;
+  // setBtnState(saveAddrBtn, 'Save');
+  hideElement(loading);
+  hideElement(blurOverlay);
 };
 saveAddrBtn?.addEventListener('click', async () => {
   resetErrors();
@@ -613,40 +621,113 @@ saveAddrBtn?.addEventListener('click', async () => {
         credentials: 'include'
       });
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
+      if (resp.validationErrors) {
+        Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
+          setError(document.querySelector(`#${sel}`), errMsg);
+        });
+      }
       switch (resp.status) {
         case 200:
+        case 201:
         case 304:
-          document.querySelector(`.addrUpdateErr`).classList.remove('err');
-          document.querySelector(`.addrUpdateErr`).classList.add('success');
-          showAddrUpdateErrors('.addrUpdateErr', resp.userMessage);
-          // Show success popup & reload page.
-          loading.innerText = 'Address Saved!';
-          ok = true;
-          refreshPage();
+          if (!resp.validationErrors) {
+            // addrUpdateErr.classList.remove('err');
+            // addrUpdateErr.classList.add('success');
+            // setError(addrUpdateErr, resp.userMessage);
+            // Show success popup & reload page.
+            loading.classList.add('success');
+            loading.innerText = resp.userMessage;
+            ok = true;
+            refreshPage();
+          }
           break;
         default:
-          if (resp.validationErrors) {
-            Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
-              showAddrUpdateErrors(sel, errMsg);
-            });
-          } else {
-            showAddrUpdateErrors('.addrUpdateErr', resp.userMessage || 'Something went wrong!');
+          if (!resp.validationErrors) {
+            setError(addrUpdateErr, resp.userMessage || 'Something went wrong!');
           }
           break;
       }
     } catch (err) {
-      showAddrUpdateErrors('.addrUpdateErr', 'Something went wrong!');
+      setError(addrUpdateErr, 'Something went wrong!');
     }
     !ok && disableAddrForm(false);
   }
+});
+// set default address
+defAddr?.forEach(defAddrBtn => {
+  defAddrBtn.addEventListener('click', async () => {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const id = defAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
+      if (!id || isNaN(id)) {
+        throw new Error();
+      }
+      const itemsToBeUpdated = { id, ct };
+      const resp = await fetchData('/user/address', 'PUT', itemsToBeUpdated, {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': ct,
+        credentials: 'include'
+      });
+      switch (resp.status) {
+        case 200:
+          loading.classList.add('success');
+          loading.innerText = resp.userMessage;
+          break;
+        default:
+          loading.classList.add('err');
+          loading.innerText = resp.userMessage;
+          break;
+      }
+    } catch (err) {
+      loading.classList.add('err');
+      loading.innerText = 'Something went wrong!';
+    }
+    refreshPage();
+  });
+});
+// delete address
+delAddr?.forEach(delAddrBtn => {
+  delAddrBtn.addEventListener('click', async () => {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const id = delAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
+      if (!id || isNaN(id)) {
+        throw new Error();
+      }
+      const itemsToBeUpdated = { id, ct };
+      const resp = await fetchData('/user/address', 'DELETE', itemsToBeUpdated, {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': ct,
+        credentials: 'include'
+      });
+      switch (resp.status) {
+        case 200:
+          loading.classList.add('success');
+          loading.innerText = resp.userMessage;
+          break;
+        default:
+          loading.classList.add('err');
+          loading.innerText = resp.userMessage;
+          break;
+      }
+    } catch (err) {
+      loading.classList.add('err');
+      loading.innerText = 'Something went wrong!';
+    }
+    refreshPage();
+  });
 });
 
 // ################################################################################################################################
 // ## Search ##
 const searchResultsArr = Array.from(document.querySelectorAll(`div.search-results`));
-const hideSearchResults = () => searchResultsArr.forEach(resultDiv => resultDiv.classList.add('hide'));
-const showSearchResults = () => searchResultsArr.forEach(resultDiv => resultDiv.classList.remove('hide'));
-const searchResults = document.querySelector(`div.search-results`);
+const hideSearchResults = () => searchResultsArr.forEach(resultDiv => hideElement(resultDiv));
+const showSearchResults = () => searchResultsArr.forEach(resultDiv => showElement(resultDiv));
+// const searchResults = document.querySelector(`div.search-results`);
 Array.from(document.querySelectorAll(`input[name="search"]`)).forEach(el =>
   el.addEventListener('click', () => {
     showSearchResults();

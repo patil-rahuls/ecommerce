@@ -35,6 +35,12 @@ class UserController implements Controller {
     this.router.post(`/address`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
       this.user.updateAddress(req, res, next)
     );
+    this.router.delete(`/address`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
+      this.user.deleteAddress(req, res, next)
+    );
+    this.router.put(`/address`, CSRF.setCsrfToken(), dbMiddleware.setDbInstance('WRITE'), (req, res, next) =>
+      this.user.setDefaultAddress(req, res, next)
+    );
   }
 }
 

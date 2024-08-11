@@ -14,7 +14,7 @@
     "start": "npm run build && set NODE_ENV=production && node dist/server.js",
     "start:dev": "npm run build && set NODE_ENV=development && node dist/server.js",
     "lint-staged": "lint-staged",
-    "prettier:fix": "prettier --write src",
+    "prettier:fix": "prettier --ignore-path .prettierignore --write src",
     "lint": "eslint ./src/ --cache --ext .ts",
     "prettier:configs": "prettier --write tsconfig.json eslint.config.js .prettierrc ",
     "prepare": "husky"
