@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { LOGGER } from '../common/logger.js';
 import { ERROR_CODES, GENERIC_ERR_STR } from '../common/error-codes.js';
+import { LOGGER } from '../common/logger.js';
+import { DB } from './db.js';
 
 class BaseError extends Error {
   public debug;
@@ -40,14 +41,7 @@ class BaseError extends Error {
     }
 
     // Release DB connections.
-    if (res.locals?.DB_CONN?.READ) {
-      res.locals.DB_CONN.READ.release();
-      LOGGER.info('DB connection `READ` Released!');
-    }
-    if (res.locals?.DB_CONN?.WRITE) {
-      res.locals.DB_CONN.WRITE.release();
-      LOGGER.info('DB connection `WRITE` Released!');
-    }
+    DB.releaseConnection(res);
 
     if (err instanceof BaseError) {
       errObj.status = err.status;

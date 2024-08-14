@@ -3,7 +3,7 @@ import { AddressType } from '../types.js';
 interface Address {
   id: number;
   name: string;
-  mobile: number;
+  mobile: string;
   pincode: number;
   addressText: string;
   addressType: AddressType;

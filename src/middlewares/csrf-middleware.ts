@@ -14,6 +14,7 @@ export default {
         if (!req.session.preSessionId) {
           throw new BaseError(`ERR_LOGINFORM_UNAUTHORIZED`);
         }
+        // Check 'ct' cookie in the request headers.
         const ctCookie = CookieHelper.getCookie(req, 'ct');
         // Generate a CSRF token if expired/not-exists.
         // if (!req.session?.ct || !ctCookie) {

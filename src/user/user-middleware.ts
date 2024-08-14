@@ -1,22 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
+import { DB } from '../middlewares/db.js';
 import { BaseError } from '../middlewares/error-middleware.js';
 import { AuthMiddleware } from './user-auth-middleware.js';
 import { InputValidator } from '../common/input-validator.js';
-import { LOGGER } from '../common/logger.js';
 
 class UserMiddleware {
   public async profile(req: Request, res: Response, next: NextFunction) {
     try {
       if (req.session?.user?.isAuthenticated) {
-        const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-        if (!dbInstance) {
-          throw new BaseError('DB_INSTANCE_NOT_FOUND');
-        }
-        res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-        const dbConn = res.locals.DB_CONN[dbInstance];
+        const dbConn = await DB.createConnection(res);
         const userAddresses = await this.getUserAddresses(dbConn, req.session.user.id);
-        await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-        LOGGER.info(`DB connection ${dbInstance} Released!`);
+        DB.releaseConnection(res);
         req.session.user.allAddresses = userAddresses;
         res.render('index', {
           layout: 'user-profile',
@@ -101,15 +95,9 @@ class UserMiddleware {
           });
         } else if (Object.keys(dataTobeUpdated).length) {
           // Update
-          const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-          if (!dbInstance) {
-            throw new BaseError('DB_INSTANCE_NOT_FOUND');
-          }
-          res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-          const dbConn = res.locals.DB_CONN[dbInstance];
+          const dbConn = await DB.createConnection(res);
           const result = await this.updateUser(dbConn, dataTobeUpdated, req.session.user.id);
-          await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-          LOGGER.info(`DB connection ${dbInstance} Released!`);
+          DB.releaseConnection(res);
           if (result?.affectedRows) {
             // Update session.
             Object.entries(dataTobeUpdated).forEach(([k, v]) => {
@@ -193,17 +181,11 @@ class UserMiddleware {
           });
         } else if (Object.keys(dataTobeUpdated).length === 5) {
           dataTobeUpdated.addressText = dataTobeUpdated.addressText.trim();
-          const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-          if (!dbInstance) {
-            throw new BaseError('DB_INSTANCE_NOT_FOUND');
-          }
-          res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-          const dbConn = res.locals.DB_CONN[dbInstance];
+          const dbConn = await DB.createConnection(res);
           if (id) {
             // Update
             const result = await this.updateUserAddress(dbConn, dataTobeUpdated, req.session?.user?.id, id);
-            await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-            LOGGER.info(`DB connection ${dbInstance} Released!`);
+            DB.releaseConnection(res);
             if (!result?.affectedRows) {
               throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
               // res.json({
@@ -224,8 +206,7 @@ class UserMiddleware {
             // Add
             dataTobeUpdated['user_id'] = req.session?.user?.id;
             const result = await this.insertUserAddress(dbConn, dataTobeUpdated);
-            await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-            LOGGER.info(`DB connection ${dbInstance} Released!`);
+            DB.releaseConnection(res);
             if (!result?.insertId) {
               throw new BaseError(`ERR_COULDNT_SAVE_USER`);
             }
@@ -261,16 +242,9 @@ class UserMiddleware {
           throw new BaseError(`ERR_ADDRESS_DELETE_FAILED`);
         }
         // Delete
-        const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-        if (!dbInstance) {
-          throw new BaseError('DB_INSTANCE_NOT_FOUND');
-        }
-        res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-        const dbConn = res.locals.DB_CONN[dbInstance];
+        const dbConn = await DB.createConnection(res);
         const result = await this.deleteUserAddress(dbConn, req.session.user.id, id);
-        await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-        LOGGER.info(`DB connection ${dbInstance} Released!`);
-        LOGGER.info(JSON.stringify(result));
+        DB.releaseConnection(res);
         if (result?.affectedRows) {
           // Update session.
           const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
@@ -309,15 +283,9 @@ class UserMiddleware {
           throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
         }
         // Update user - Set Default Address
-        const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-        if (!dbInstance) {
-          throw new BaseError('DB_INSTANCE_NOT_FOUND');
-        }
-        res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-        const dbConn = res.locals.DB_CONN[dbInstance];
+        const dbConn = await DB.createConnection(res);
         const result = await this.setUserDefaultAddress(dbConn, req.session.user.id, id);
-        await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-        LOGGER.info(`DB connection ${dbInstance} Released!`);
+        DB.releaseConnection(res);
         if (result?.affectedRows) {
           // update session
           req.session.user.defaultBillingAddress = Number(id);
@@ -347,10 +315,7 @@ class UserMiddleware {
 
   private async getUserAddresses(dbConn, userId) {
     try {
-      const [rows] = await dbConn.execute(
-        'SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `address` WHERE `user_id` = ?;',
-        [userId]
-      );
+      const [rows] = await dbConn.execute('SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `address` WHERE `user_id` = ?;', [userId]);
       // rows -> [{...}] OR []
       return rows;
     } catch (err) {
@@ -399,11 +364,7 @@ class UserMiddleware {
       }
       updateStr = updateStr?.slice(0, -1); // remove the last ','
       if (updateStr) {
-        const [result] = await dbConn.execute(`UPDATE address SET ${updateStr} WHERE id = ? AND user_id = ?;`, [
-          ...queryParams,
-          addrId,
-          userId
-        ]);
+        const [result] = await dbConn.execute(`UPDATE address SET ${updateStr} WHERE id = ? AND user_id = ?;`, [...queryParams, addrId, userId]);
         // eslint-disable-next-line
         return result as any;
       } else {
@@ -453,10 +414,7 @@ class UserMiddleware {
   private async deleteUserAddress(dbConn, userId, addrId) {
     try {
       // first check if its not the default address
-      const [chk] = await dbConn.execute(
-        `SELECT id FROM user WHERE default_billing_addr = ? OR default_shipping_addr = ? `,
-        [addrId, addrId]
-      );
+      const [chk] = await dbConn.execute(`SELECT id FROM user WHERE default_billing_addr = ? OR default_shipping_addr = ? `, [addrId, addrId]);
       if (chk?.[0]?.id) {
         // address is used as default shipping/billing.
         throw new BaseError(`ADDRESS_IN_USE_CANT_DELETE`);

@@ -33,7 +33,9 @@ abstract class SMSAuth {
       if (otpSet === 'OK') {
         LOGGER.dev(`OTP-${mobileNum} -> ${await redisRead.get(`${mobileNum}`)}`);
         // TODO: here, add the logic to send OTP SMS to `userId` through AWS SQS.
-        // if sending SMS fails, remove that entry from redis and throw error.
+        // if sending SMS fails, do the following
+        // 1. Remove that entry from redis and
+        // 2. throw error(already handled)
         await redisRead.quit();
         return otp;
       }

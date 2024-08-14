@@ -1,3 +1,6 @@
 # You can actually pass a flag to your prettier command --ignore-path and then give it the path of your .gitignore file so it will use that instead of the .prettierignore file.
 # prettier --ignore-path .gitignore
-# this is already the default behaviour in the current prettier version.
+# this is already the default behaviour in the current prettier version. BUT WE ARE NOT USING IT.
+# else use prettier --ignore-path .prettierignore
+src/views/layouts/user-profile.html
+src/views/index.html

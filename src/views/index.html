@@ -1,24 +1,51 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <title>My Store</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>My Store</title>
+    <!-- SEO tags -->
+    <meta name="description" content="SHORT_DESCRIPTION">
+    <meta name="keywords" content="">
+    <meta name="author" content="NAME">
+    <meta name="subject" content="WEBSITE PAGE SUBJECT">
+    <meta name="copyright" content="COPYRIGHT_HOLDERS">
+    <meta name="revised" content="REVISION_DATE">
+    <meta name='Classification' content='Business'>
+    <meta name='url' content='URL'>
+    <!-- Opengraph https://www.semrush.com/blog/open-graph/ -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Page Title less than 55 characters">
+    <meta property="og:image" content="/some-image.png">  <!-- 1200 x 630 -->
+    <meta property="og:image:alt" content="Image description">
+    <meta property="og:url" content="/this-page.html">
+    <meta property="og:description" content="Description of the page less than 150 characters">
+    <meta property="og:site_name" content="Your Brand/Site Name">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:locale:alternate" content="en_US">
+
     <link rel="stylesheet" type="text/css" href="/style.css" />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-    />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <meta name="theme-color" content="#000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#FFF" media="(prefers-color-scheme: light)">
   </head>
   <body>
-    <% if(data) { %> <%- include('partials/header.html', { data }) %> <% } else { %> <%- include('partials/header.html')
-    %> <% } %> <% if(layout) { %>
-    <div id="layout"><%- include('layouts/'+ layout + '.html') %></div>
+    <% if(data) { %>
+      <%- include('partials/header.html', { data }) %>
     <% } else { %>
-    <div id="layout"><%- include('layouts/home.html') %></div>
-    <% } %> <%- include('partials/footer.html') %>
+      <%- include('partials/header.html') %>
+    <% } %>
+
+    <div id="layout">
+      <% if(layout) { %>
+        <%- include('layouts/'+ layout + '.html') %>
+      <% } else { %>
+        <%- include('layouts/home.html') %>
+      <% } %> 
+    </div>
+
+    <%- include('partials/footer.html') %>
     <script type="text/javascript" src="/ui.js"></script>
   </body>
 </html>

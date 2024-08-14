@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
-import { LOGGER } from '../common/logger.js';
 import { BaseError } from '../middlewares/error-middleware.js';
+import { DB } from '../middlewares/db.js';
 import { CookieHelper } from '../common/cookie-helper.js';
 import { InputValidator } from '../common/input-validator.js';
 import { SMSAuth } from '../common/sms-auth.js';
@@ -116,13 +116,7 @@ class AuthMiddleware {
       }
 
       // Ready to login/set-session
-      const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
-      // ^ 'WRITE' or 'READ' or other DB Instance identifier.
-      if (!dbInstance) {
-        throw new BaseError('DB_INSTANCE_NOT_FOUND');
-      }
-      res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-      const dbConn = res.locals.DB_CONN[dbInstance];
+      const dbConn = await DB.createConnection(res);
       let user = await this.getUser(userId, dbConn);
       switch (true) {
         case user?.[0]?.user_group_id === 6:
@@ -134,18 +128,14 @@ class AuthMiddleware {
           if (!result?.insertId) {
             throw new BaseError(`ERR_COULDNT_SAVE_USER`);
           }
-          [user] = await dbConn.execute(
-            'SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `id` = ? ;',
-            [result?.insertId]
-          );
+          [user] = await dbConn.execute('SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `id` = ? ;', [result?.insertId]);
         case otpCorrect && !this.isNewUser(user):
         // Existing user authenticated using OTP
 
         /*case (await bcrypt.compare(passkey, user?.[0]?.password)):*/
         case passkey === user?.[0]?.password:
           // Existing user authenticated using password
-          await dbConn.release(); // res.locals.DB_CONN[dbInstance].release();
-          LOGGER.info(`DB connection ${dbInstance} Released!`);
+          DB.releaseConnection(res);
           await this.setUsrSession(user[0], req, res);
           res.json({
             status: 200,
@@ -168,10 +158,7 @@ class AuthMiddleware {
 
   private async getUser(mobile, dbConn) {
     try {
-      const [rows] = await dbConn.execute(
-        'SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `mobile` = ?;',
-        [mobile]
-      );
+      const [rows] = await dbConn.execute('SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `mobile` = ?;', [mobile]);
       // rows -> [{...}] OR []
       return rows;
     } catch (err) {

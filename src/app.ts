@@ -5,9 +5,9 @@ import helmet from 'helmet';
 import path from 'path';
 import ejsViewEngine from 'ejs';
 import './config/dotenv.js';
+import { Controller } from './common/interfaces/controller.js';
 import { LOGGER } from './common/logger.js';
 import { BaseError } from './middlewares/error-middleware.js';
-import { Controller } from './common/interfaces/controller.js';
 
 class App {
   public app: express.Application;
@@ -17,13 +17,13 @@ class App {
     this.app = express();
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
-    // Error Handler Middleware (last Middleware is treated as error handler)
     this.initializeErrorHandling();
   }
 
+  // Middlewares
   private initializeMiddlewares() {
     this.app.use(bodyParser.json());
-    this.app.use(bodyParser.urlencoded({ extended: false })); // IMP - these should be written before all the routes.
+    this.app.use(bodyParser.urlencoded({ extended: false }));
     this.app.use(
       helmet({
         contentSecurityPolicy: {
@@ -50,8 +50,8 @@ class App {
     );
     this.app.use(
       session({
-        // Session cookie config.
-        name: 'satr_id', // hindi translation of the word 'session'
+        // Session cookie configuration.
+        name: 'satr_id', // satr(Hindi) = 'session'
         secret: process.env.SESSION_SECRET, // used to sign the session ID cookie.
         resave: false, // save changes to the store on every request.
         saveUninitialized: false,
@@ -78,11 +78,13 @@ class App {
     LOGGER.info(`Initialized middlewares.`);
   }
 
+  // Error Middleware - (Last Middleware is treated as error handler)
   private initializeErrorHandling() {
     this.app.use(BaseError.ErrorHandler);
     LOGGER.info(`Initialized Error-Handling Middleware.`);
   }
 
+  // Routes
   private initializeControllers(controllers: Controller[]) {
     controllers.forEach(controller => {
       this.app.use(controller.path, controller.router);
