@@ -11,6 +11,7 @@ interface User {
   defaultBillingAddress?: number; // points to Address.id
   defaultShippingAddress?: number; // points to Address.id
   allAddresses?: Address[];
+  wishlist: any; // should be Product[] WIP
   userGroup?: string;
   createdAt?: string;
   isAuthenticated: boolean;

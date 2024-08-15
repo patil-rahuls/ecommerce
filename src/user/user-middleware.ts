@@ -313,9 +313,49 @@ class UserMiddleware {
     }
   }
 
+  public async wishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Only for UI dev...
+      res.render('index', {
+        layout: 'user-wishlist',
+        data: null
+      });
+      /*
+      if (req.session?.user?.isAuthenticated) {
+        const dbConn = await DB.createConnection(res);
+        const userWishlist = await this.getUserWishlist(dbConn, req.session.user.id);
+        DB.releaseConnection(res);
+        req.session.user.wishlist = userWishlist;
+        res.render('index', {
+          layout: 'user-wishlist',
+          data: req.session.user
+        });
+      } else {
+        res.redirect('index');
+      }
+      // */
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+      }
+    }
+  }
+
   private async getUserAddresses(dbConn, userId) {
     try {
       const [rows] = await dbConn.execute('SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `address` WHERE `user_id` = ?;', [userId]);
+      // rows -> [{...}] OR []
+      return rows;
+    } catch (err) {
+      throw new BaseError(`DB_QUERY_ERR`, err.message);
+    }
+  }
+
+  private async getUserWishlist(dbConn, userId) {
+    try {
+      const [rows] = await dbConn.execute('SELECT id, product_id FROM `wishlist` WHERE `user_id` = ?;', [userId]);
       // rows -> [{...}] OR []
       return rows;
     } catch (err) {

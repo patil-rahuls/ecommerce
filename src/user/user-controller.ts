@@ -29,6 +29,7 @@ class UserController implements Controller {
     this.router.post(`/address`, CSRF.setCsrfToken(), DB.setInstance('WRITE'), (req, res, next) => this.user.updateAddress(req, res, next));
     this.router.delete(`/address`, CSRF.setCsrfToken(), DB.setInstance('WRITE'), (req, res, next) => this.user.deleteAddress(req, res, next));
     this.router.put(`/address`, CSRF.setCsrfToken(), DB.setInstance('WRITE'), (req, res, next) => this.user.setDefaultAddress(req, res, next));
+    this.router.get(`/wishlist`, CSRF.setCsrfToken(), DB.setInstance('READ'), (req, res, next) => this.user.wishlist(req, res, next));
   }
 }
 

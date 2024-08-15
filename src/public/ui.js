@@ -39,9 +39,7 @@ const validateMobileNumber = mobileNum => {
   return mobileNum?.length === 10 && !isNaN(mobileNum) && regxPattern.test(mobileNum);
 };
 const validateEmail = email => {
-  const regxPattern = new RegExp(
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  );
+  const regxPattern = new RegExp(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
   return email?.length <= 254 && regxPattern.test(email);
 };
 const validateGender = gender => {
@@ -374,15 +372,7 @@ const showProfileUpdateErrors = (errSel, msg) => {
   errSel.querySelector('span').innerText = msg;
 };
 const disableProfileForm = disabledState => {
-  [
-    changePwLink,
-    profilePassword,
-    profileRePassword,
-    profileName,
-    profileEmail,
-    profileGender,
-    updateProfileBtn
-  ].forEach(el => (el.disabled = disabledState));
+  [changePwLink, profilePassword, profileRePassword, profileName, profileEmail, profileGender, updateProfileBtn].forEach(el => (el.disabled = disabledState));
   if (disabledState) {
     showElement(loading);
     showElement(blurOverlay);
@@ -509,18 +499,14 @@ const editAddr = Array.from(document.querySelectorAll(`a.editAddr`));
 const delAddr = Array.from(document.querySelectorAll(`a.delAddr`));
 const defAddr = Array.from(document.querySelectorAll(`a.defAddr`));
 const resetErrors = () => {
-  [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err, addrUpdateErr].forEach(sel =>
-    hideElement(sel)
-  );
+  [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err, addrUpdateErr].forEach(sel => hideElement(sel));
 };
 addAddrBtn?.addEventListener('click', () => {
   showElement(addrForm, 'inline-grid');
   hideElement(addAddrBtn);
 });
 const clearAddrForm = () => {
-  ['Work', 'Home'].forEach(
-    addrTypeValue => (document.querySelector(`input[name="addrType"][value="${addrTypeValue}"]`).checked = false)
-  );
+  ['Work', 'Home'].forEach(addrTypeValue => (document.querySelector(`input[name="addrType"][value="${addrTypeValue}"]`).checked = false));
   [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId].forEach(el => (el.value = ''));
 };
 cancelAddr?.addEventListener('click', () => {
@@ -582,9 +568,7 @@ const validateAddr = () => {
 };
 const disableAddrForm = disabledState => {
   // addrType?.disabled = disabledState;
-  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId, saveAddrBtn, cancelAddr].forEach(
-    el => (el.disabled = disabledState)
-  );
+  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId, saveAddrBtn, cancelAddr].forEach(el => (el.disabled = disabledState));
   if (disabledState) {
     showElement(loading);
     showElement(blurOverlay);
