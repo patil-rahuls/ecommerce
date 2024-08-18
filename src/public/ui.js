@@ -138,6 +138,13 @@ document.addEventListener('keydown', e => {
 const loading = document.querySelector(`#loading`);
 const blurOverlay = document.querySelector(`#blurOverlay`);
 const retryBtn = document.querySelector(`#loading input`);
+// ## show loading on anchor clicks ##
+const showLoading = () => {
+  loading.innerText = 'Catchy quote here';
+  showElement(loading);
+  showElement(blurOverlay);
+};
+document.querySelectorAll('a').forEach(a => a.addEventListener('click', showLoading));
 const closePopup = popupSel => {
   hideElement(popupSel);
   hideElement(loading);
@@ -162,7 +169,6 @@ const closeLoginForm = () => {
   closePopup(loginForm);
   refreshPage(0); // This may affect UX.
 };
-blurOverlay.addEventListener('click', closeLoginForm);
 closeLoginFormSel?.addEventListener('click', closeLoginForm);
 retryBtn?.addEventListener('click', () => {
   refreshPage(0);
@@ -268,7 +274,6 @@ const login = async () => {
   }
 };
 continueBtn?.addEventListener('click', async () => {
-  blurOverlay.removeEventListener('click', closeLoginForm);
   if (loginId.value?.length !== 10 || isNaN(loginId.value) || !new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
     setError(loginIdErr, 'Please enter a valid mobile-number!');
     return;

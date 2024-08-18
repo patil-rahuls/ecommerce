@@ -126,6 +126,14 @@ export const ERROR_CODES = {
     message: `Could not set address as default as the address doesn't exist.`,
     userMessage: `Something went wrong!`
   },
+  ERR_WISHLIST_PAGE: {
+    status: 500,
+    message: `Failed in Profile page`
+  },
+  ERR_ORDERS_PAGE: {
+    status: 500,
+    message: `Failed in Orders page`
+  },
 
   // DB
   ERR_DB_CONNECTION: {

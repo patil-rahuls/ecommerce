@@ -1,15 +1,18 @@
 <main>
-  <h2>My Wishlist</h2>
-  <div class="profileForm">
+  <h2>MY WISHLIST</h2>
+  <div class="profileForm wishlist">
     <table>
       <tbody>
         <tr>
           <!-- <td>
-              <p>Nothing here yet...<a href="/">Go to Home</a></p>
-            </td> -->
+            <p>Nothing here yet...<a href="/">Go to Home</a></p>
+          </td> -->
+          <% for(const i of [1,2,3,4,5]) { %>
           <td class="wishlist-item">
             <a>
-              <img src="xxxxxxxxxxxxx" />
+              <div class="blur-load">
+                <img src="/product.jpeg" loading="lazy" />
+              </div>
               <br />
               <span class="product-title">Product Title</span>
             </a>
@@ -19,6 +22,7 @@
               <i class="fa-solid fa-trash" aria-hidden="true"></i>
             </div>
           </td>
+          <% } %>
         </tr>
       </tbody>
     </table>

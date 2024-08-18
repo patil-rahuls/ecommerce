@@ -1,7 +1,7 @@
 <main>
-  <h2>My Account</h2>
+  <h2>MY ACCOUNT</h2>
   <div class="profileForm">
-    <table>
+    <table class="user-info">
       <tr>
         <td><label>Mobile</label></td>
         <td><input name="mobile" value="<%= data.mobile %>" disabled /></td>
@@ -74,7 +74,7 @@
 </main>
 <main>
   <h2>
-    My Addresses
+    MY ADDRESSES
     <button id="add-address" class="btn btn-primary add-address">Add new</button>
   </h2>
   <div class="profileForm">
@@ -104,7 +104,7 @@
       <span id="addrUpdateErr" class="err hide">Something went wrong!</span>
       <input name="cancelAddr" type="button" class="btn-primary" value="Cancel" />
     </div>
-    <table>
+    <table class="address-cards">
       <tbody>
         <tr>
           <% if(data?.allAddresses?.length) { 

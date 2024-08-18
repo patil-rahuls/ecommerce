@@ -1,0 +1,44 @@
+<main>
+  <h2>MY ORDERS</h2>
+  <div class="profileForm cart">
+    <table>
+      <tbody>
+        <!-- <tr>
+          <td>
+            <p>Nothing here yet...<a href="/">Go to Home</a></p>
+          </td>
+        </tr> -->
+        <% for(const i of [1,2,3,4,5]) { %>
+        <tr>
+          <td class="cart-item">
+            <a>
+              <div class="blur-load">
+                <img src="/product.jpeg" loading="lazy" />
+              </div>
+            </a>
+            <a>
+              <span class="product-title">Product Title</span>
+              <span class="product-attr">Color: Red, Size: L</span>
+            </a>
+            <div class="price-container">
+              <h4 class="success">15% Off</h4>
+              <h4 class="actual-price">Rs.4,199</h4>
+              <h3>Rs.2,999</h3>
+              <small>Delivered on 24 Sep. 2024</small>
+            </div>
+            <div class="qty-container">
+              <span><b>QUANTITY</b></span>
+              <div class="qty"><input type="button" value="-" /> <input type="text" value="1" /> <input type="button" value="+" /></div>
+            </div>
+          </td>
+          <td class="cart-item">
+            <input type="button" class="btn btn-primary" value="Wishlist" />
+            <input type="button" class="btn" value=" " />
+            <i class="fa fa-trash"></i>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</main>

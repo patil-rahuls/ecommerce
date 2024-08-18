@@ -313,6 +313,7 @@ class UserMiddleware {
     }
   }
 
+  // WIP
   public async wishlist(req: Request, res: Response, next: NextFunction) {
     try {
       // Only for UI dev...
@@ -338,7 +339,57 @@ class UserMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+      }
+    }
+  }
+
+  // WIP
+  public updateWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.json({
+        status: 200,
+        userMessage: `Wishlist Updated!`
+      });
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+      }
+    }
+  }
+
+  // WIP
+  public async cart(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Only for UI dev...
+      res.render('index', {
+        layout: 'user-cart',
+        data: null
+      });
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+      }
+    }
+  }
+
+  // WIP
+  public async orders(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Only for UI dev...
+      res.render('index', {
+        layout: 'user-orders',
+        data: null
+      });
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_ORDERS_PAGE`, error.message));
       }
     }
   }
@@ -353,6 +404,7 @@ class UserMiddleware {
     }
   }
 
+  // WIP
   private async getUserWishlist(dbConn, userId) {
     try {
       const [rows] = await dbConn.execute('SELECT id, product_id FROM `wishlist` WHERE `user_id` = ?;', [userId]);

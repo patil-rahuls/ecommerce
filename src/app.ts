@@ -94,9 +94,15 @@ class App {
 
   public start() {
     this.app.set('json spaces', 2);
-    this.app.listen(this.PORT, () => {
-      LOGGER.info(`Server instance started! PORT - ${this.PORT}`);
-    });
+    this.app
+      .listen(this.PORT, () => {
+        LOGGER.info(`Server instance started! PORT - ${this.PORT}`);
+      })
+      .on('error', err => {
+        if (err.message.includes('listen EADDRINUSE: address already in use')) {
+          console.error(`PORT-${this.PORT} already in use. Please re-configure the server and restart the App.`);
+        }
+      });
   }
 }
 export { App };

@@ -131,6 +131,13 @@ select {
 .btn-primary {
   color: var(--primary-color) !important;
 }
+.btn-checkout {
+  background-color: crimson !important;
+  color: var(--light) !important;
+  width: 220px;
+  font-size: 18px;
+  margin: 0 auto;
+}
 .btn-primary:hover {
   border: 1px solid var(--primary-color) !important;
 }
@@ -139,7 +146,7 @@ select {
   border: 1px solid var(--primary-color) !important;
 }
 .btn-primary-solid {
-  background-color: var(--primary-color);
+  background-color: var(--primary-color) !important;
   color: var(--light) !important;
   padding-left: 0.7rem;
 }
@@ -166,18 +173,21 @@ select {
 
 /* Layout */
 #layout {
-  padding: 1.5rem;
+  padding: 16px 6px 6px 6px;
   margin: 0 auto;
+}
+#layout main h2 {
+  margin-left: 20px;
 }
 main {
   background: white;
-  padding: 10px;
+  padding: 4px 0;
   border-radius: 10px;
   margin-bottom: 20px;
   box-shadow: var(--shadow);
 }
 main * {
-  margin: 10px;
+  margin: 10px 8px;
 }
 
 /* Meta/Categories Header */
@@ -290,6 +300,7 @@ main * {
 .menu {
   position: relative;
   background: var(--light);
+  height: 100%;
 }
 .menu-bar .nav-link {
   font-size: 1rem;
@@ -414,6 +425,13 @@ main * {
 .profileForm {
   margin: 0;
 }
+.profileForm table.user-info {
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 40px;
+  border: 1px solid var(--ash);
+  border-radius: 10px;
+}
 .profileForm label {
   color: var(--fine-grey);
   font-weight: bold;
@@ -474,15 +492,20 @@ main * {
 }
 .profileForm .address {
   border: 1px solid var(--fine-grey);
-  margin-left: -10px;
   width: 281.5px;
   display: inline-block;
-  margin-right: 20px;
   padding-bottom: 10px;
   border-radius: 6px;
 }
 .profileForm .address.default {
   box-shadow: var(--shadow);
+}
+.profileForm .address-cards {
+  width: 100%;
+  text-align: center;
+}
+.profileForm .address div {
+  text-align: left;
 }
 .profileForm .address a {
   color: var(--primary-color);
@@ -521,11 +544,25 @@ main .add-address {
   width: 182px;
   margin: 0;
 }
-.profileForm .wishlist-item img {
+.profileForm .wishlist-item img,
+.profileForm .cart-item img {
   margin: 0;
-  width: 181px;
-  height: 181px;
-  background: #eee;
+  width: 180px;
+  height: 180px;
+  background-color: var(--light);
+}
+.profileForm .blur-load {
+  margin: 0;
+  width: 180px;
+  height: 180px;
+  background-image: url(/loading.gif);
+  background-size: contain;
+  background-position: center;
+}
+.profileForm .blur-load img {
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
 }
 .profileForm .wishlist-item .product-title {
   text-overflow: ellipsis;
@@ -549,6 +586,98 @@ main .add-address {
   margin-left: -36px;
   align-content: center;
   color: var(--fine-grey);
+}
+
+/* User Cart Page */
+.profileForm.cart {
+  text-align: -webkit-center;
+}
+.profileForm.cart * {
+  margin: 2px;
+}
+.profileForm.cart table {
+  border-collapse: collapse;
+}
+.profileForm.cart tr {
+  display: block;
+  border: 1px solid #eee;
+  margin-bottom: 20px !important;
+  box-shadow: 1px 4px 4px #eee;
+  min-width: 364px;
+  max-width: 800px;
+}
+.profileForm .cart-item {
+  display: flex;
+  min-width: 342px;
+  position: relative;
+}
+.profileForm .cart-item input[type='button']:nth-child(1) {
+  width: 128px;
+}
+.profileForm .cart-item input[type='button']:nth-child(2) {
+  width: 42px;
+  margin-left: 9px;
+}
+.profileForm .cart-item i {
+  margin-top: 13.6px;
+  margin-left: -29px;
+}
+.profileForm .cart-item .product-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profileForm .cart-item .product-attr {
+  color: var(--fine-grey);
+}
+.profileForm .cart-item .price-container {
+  position: absolute;
+  left: 202px;
+  margin-top: 140px;
+  width: max-content;
+}
+.profileForm .cart-item .price-container .actual-price {
+  color: var(--fine-grey);
+  text-decoration: line-through;
+}
+.profileForm .cart-item .qty-container {
+  position: absolute;
+}
+.profileForm .cart-item .qty-container span {
+  position: absolute;
+  left: 183px;
+  margin-top: 68px;
+  color: var(--fine-grey);
+  letter-spacing: 0.2px;
+}
+.profileForm .cart-item .qty {
+  display: flex;
+  position: absolute;
+  margin: 0;
+  left: 188px;
+  margin-top: 92px;
+}
+.profileForm .cart-item .qty input {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 20px;
+  margin: 0 4px;
+}
+/* qty value */
+.profileForm .cart-item .qty input:nth-child(2) {
+  text-align: center;
+  color: var(--dark);
+  border-radius: 2px !important;
+}
+#checkout-footer {
+  position: sticky;
+  left: 0;
+  bottom: 0;
+  padding: 20px;
+  background: var(--light);
+  box-shadow: 0px -1px 15px #aaa;
 }
 
 /* Footer */
@@ -688,7 +817,7 @@ main .add-address {
   }
   #layout {
     margin-top: 110px;
-    width: 121%;
+    width: 120%;
   }
   .addressForm input.addr {
     width: auto !important;
@@ -706,5 +835,11 @@ main .add-address {
   }
   #loginForm .input-icon {
     display: none;
+  }
+}
+
+@media (max-width: 512px) {
+  .profileForm.wishlist {
+    text-align: center;
   }
 }
