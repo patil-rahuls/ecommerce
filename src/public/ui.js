@@ -535,6 +535,9 @@ const populateAddrForm = editAddrBtn => {
 };
 editAddr?.forEach(editAddrBtn => {
   editAddrBtn.addEventListener('click', () => {
+    // Hide already shown(by clicking any anchor tags) loading overlay
+    hideElement(loading);
+    hideElement(blurOverlay);
     hideElement(addAddrBtn);
     // Populate addrForm with selected addr info
     populateAddrForm(editAddrBtn);
