@@ -210,6 +210,7 @@ main {
   background: white;
   padding: 4px 0;
   margin-bottom: 20px;
+  scroll-margin: 130px;
 }
 main * {
   margin: 10px 8px;
