@@ -507,7 +507,7 @@ const resetErrors = () => {
   [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err, addrUpdateErr].forEach(sel => hideElement(sel));
 };
 addAddrBtn?.addEventListener('click', () => {
-  showElement(addrForm, 'inline-grid');
+  showElement(addrForm, 'block');
   hideElement(addAddrBtn);
 });
 const clearAddrForm = () => {
@@ -541,7 +541,7 @@ editAddr?.forEach(editAddrBtn => {
     hideElement(addAddrBtn);
     // Populate addrForm with selected addr info
     populateAddrForm(editAddrBtn);
-    showElement(addrForm, 'inline-grid');
+    showElement(addrForm, 'block');
     document.querySelector('#layout main:nth-child(2)').scrollIntoView();
   });
 });

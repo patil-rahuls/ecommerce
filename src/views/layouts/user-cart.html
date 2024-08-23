@@ -1,5 +1,9 @@
 <main>
-  <h2>MY CART</h2>
+  <h2>
+    MY CART
+    <span>(5 Items)</span>
+    <span class="right">Order Total Rs. 12,999</span>
+  </h2>
   <div class="profileForm cart">
     <table>
       <tbody>
@@ -38,6 +42,27 @@
           </td>
         </tr>
         <% } %>
+        <tr>
+          <td class="cart-item price-details">
+            <h4 class="product-title">Price Details</h4>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Price (5 Items)</td>
+                  <td>Rs. 12,999</td>
+                </tr>
+                <tr>
+                  <td>Shipping</td>
+                  <td class="success">Free</td>
+                </tr>
+                <tr>
+                  <td><b>Amount Payable</b></td>
+                  <td><b>Rs 12,999</b></td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
