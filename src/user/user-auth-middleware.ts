@@ -196,17 +196,14 @@ class AuthMiddleware {
         at = CookieHelper.getCookie(req, 'at');
         rt = CookieHelper.getCookie(req, 'rt');
         if (!rt) {
-          // User is not logged in...
           throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
         }
       }
       if (!rt) {
-        // Logout
-        AuthMiddleware.logout(req, res, next);
+        throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
       if (!req?.session?.user?.isAuthenticated) {
-        // Logout
-        AuthMiddleware.logout(req, res, next);
+        throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
       if (!at) {
         // Renew Access Token
