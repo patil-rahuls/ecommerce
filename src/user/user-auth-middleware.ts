@@ -229,8 +229,8 @@ class AuthMiddleware {
       }
     } catch (error) {
       if (error instanceof BaseError) {
-        // This could be made better than a redirect.
-        res.redirect('/');
+        // Logout completely
+        AuthMiddleware.logout(req, res, next);
       } else {
         next(new BaseError(`ERR_USER_NOT_AUTHENTICATED`, error.message));
       }
