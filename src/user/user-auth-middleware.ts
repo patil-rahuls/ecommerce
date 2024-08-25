@@ -10,7 +10,7 @@ import { REDIS_INSTANCE } from '../common/redis.js';
 import { User } from '../common/interfaces/user.js';
 
 class AuthMiddleware {
-  static readonly ACCESS_TOKEN_EXPIRY = 1 * 60 * 1000;
+  static readonly ACCESS_TOKEN_EXPIRY = 5 * 60 * 1000;
   static readonly REFRESH_TOKEN_EXPIRY = 10 * 24 * 60 * 60 * 1000;
 
   // Access Login Form
