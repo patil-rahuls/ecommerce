@@ -8,12 +8,12 @@ abstract class SMSAuth {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
       if (await redisRead.get(`${mobileNum}`)) {
-        // if OTP exists in redis, it is valid.
+        // If OTP exists in redis, it is valid.
         // Check if OTP is requested too soon ie. before 3 minutes.
         const diff = (Date.now() - prevOtpTimeStamp) / 1000 / 60; // minutes
         if (diff < 3) {
           await redisRead.quit();
-          throw new BaseError('ERR_OTP_REQUESTED_TOO_SOON');
+          throw new BaseError('ERR_USER_OTP_REQUESTED_TOO_SOON');
         }
       }
 
@@ -40,12 +40,12 @@ abstract class SMSAuth {
         return otp;
       }
       await redisRead.quit();
-      throw new BaseError('ERR_COULDNT_SAVE_OTP');
+      throw new BaseError('ERR_USER_OTP_COULDNT_SAVE');
     } catch (error) {
       if (error instanceof BaseError) {
         throw error;
       } else {
-        throw new BaseError(`ERR_COULDNT_SEND_OTP`, error.message);
+        throw new BaseError(`ERR_USER_OTP_COULDNT_SEND`, error.message);
       }
     }
   };

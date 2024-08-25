@@ -10,6 +10,10 @@ import { REDIS_INSTANCE } from '../common/redis.js';
 import { User } from '../common/interfaces/user.js';
 
 class AuthMiddleware {
+  static readonly ACCESS_TOKEN_EXPIRY = 1 * 60 * 1000;
+  static readonly REFRESH_TOKEN_EXPIRY = 10 * 24 * 60 * 60 * 1000;
+
+  // Access Login Form
   public async loginForm(req: Request, res: Response, next: NextFunction) {
     try {
       if (req.session?.user?.isAuthenticated) {
@@ -23,46 +27,22 @@ class AuthMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        // next(error); // tested
-        next(new BaseError(`ERR_LOGINFORM`, error.message));
+        next(new BaseError(`ERR_USER_LOGINFORM`, error.message));
       }
     }
   }
 
-  public async logout(req: Request, res: Response, next: NextFunction) {
-    try {
-      req.session.destroy(error => {
-        if (error) {
-          next(new BaseError(`ERR_LOGOUT`));
-        }
-      });
-      // an attempt to delete the session and other cookies from client's browser by expiring them.
-      const cookiesArr = ['satr_id', 'ct', 'at', 'rt'];
-      cookiesArr.forEach(c => CookieHelper.deleteCookies(res, c));
-      res.redirect('/');
-    } catch (error) {
-      next(new BaseError(`ERR_LOGOUT`, error.message));
-    }
-  }
-
-  public static isRequestAuthorized(req: Request, ct) {
-    const ctCookie = CookieHelper.getCookie(req, 'ct');
-    return [ct, ctCookie, req.header('X-XSRF-TOKEN')].every(token => token === req.session.ct);
-  }
-
+  // Validate and verify Mobile-Number & send OTP
   public async sendOtp(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId = '', ct = '' } = req.body;
-      if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-        throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
-      }
+      const { userId = '' } = req.body;
       if (!InputValidator.validateMobileNumber(userId)) {
-        throw new BaseError(`INVALID_MOBILE`);
+        throw new BaseError(`ERR_INVALID_MOBILE`);
       }
 
       const otp = await SMSAuth.generateSendOTP(userId, req.session.lastOtpAt);
       if (!otp || isNaN(otp)) {
-        throw new BaseError(`ERR_COULDNT_SEND_OTP`);
+        throw new BaseError(`ERR_USER_OTP_COULDNT_SEND`);
       }
       req.session.lastOtpAt = Date.now();
       res.json({
@@ -73,23 +53,21 @@ class AuthMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_COULDNT_SEND_OTP`, error.message));
+        next(new BaseError(`ERR_USER_OTP_COULDNT_SEND`, error.message));
       }
     }
   }
 
+  // Validate and verify Password / OTP
   public async verify(req: Request, res: Response, next: NextFunction) {
     // handle authentication
     try {
       if (req.session?.user?.isAuthenticated) {
         throw new BaseError('ERR_USR_ALREADY_LOGGED_IN');
       }
-      const { userId = '', passkey = '', ct = '' } = req.body;
-      if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-        throw new BaseError('ERR_UNAUTHORIZED_LOGIN_ATTEMPT');
-      }
+      const { userId = '', passkey = '' } = req.body;
       if (!InputValidator.validateMobileNumber(userId)) {
-        throw new BaseError(`INVALID_MOBILE`);
+        throw new BaseError(`ERR_INVALID_MOBILE`);
       }
 
       let otpCorrect = false;
@@ -104,7 +82,7 @@ class AuthMiddleware {
             await redisRead.del(`${userId}`);
           } else {
             await redisRead.quit();
-            throw new BaseError('INCORRECT_OTP');
+            throw new BaseError('ERR_USER_INCORRECT_OTP');
           }
           await redisRead.quit();
           break;
@@ -112,7 +90,7 @@ class AuthMiddleware {
         case passkey?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(passkey):
           break;
         default:
-          throw new BaseError('INCORRECT_PASSWORD');
+          throw new BaseError('ERR_USER_INCORRECT_PASSWORD');
       }
 
       // Ready to login/set-session
@@ -120,13 +98,13 @@ class AuthMiddleware {
       let user = await this.getUser(userId, dbConn);
       switch (true) {
         case user?.[0]?.user_group_id === 6:
-          throw new BaseError(`BLACKLISTED_USER`);
+          throw new BaseError(`ERR_USER_BLACKLISTED`);
         case otpCorrect && this.isNewUser(user):
           // New user authenticated using OTP
           const [result] = await dbConn.execute('INSERT INTO `user` SET `mobile` = ? ', [userId]);
           // result = {... , "insertId": n, ...};
           if (!result?.insertId) {
-            throw new BaseError(`ERR_COULDNT_SAVE_USER`);
+            throw new BaseError(`ERR_USER_COULDNT_SAVE`);
           }
           [user] = await dbConn.execute('SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `id` = ? ;', [result?.insertId]);
         case otpCorrect && !this.isNewUser(user):
@@ -145,13 +123,13 @@ class AuthMiddleware {
         case passkey !== user?.[0]?.password:
         /*case (!await bcrypt.compare(passkey, user?.[0]?.password)):*/
         default:
-          throw new BaseError('INCORRECT_PASSWORD');
+          throw new BaseError('ERR_USER_INCORRECT_PASSWORD');
       }
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_LOGIN`, error.message));
+        next(new BaseError(`ERR_USER_LOGIN`, error.message));
       }
     }
   }
@@ -159,10 +137,9 @@ class AuthMiddleware {
   private async getUser(mobile, dbConn) {
     try {
       const [rows] = await dbConn.execute('SELECT id, mobile, password, email, name, gender, default_billing_addr AS defaultBillingAddress, default_shipping_addr AS defaultShippingAddress, user_group_id AS userGroup, created_at AS createdAt FROM `user` WHERE `mobile` = ?;', [mobile]);
-      // rows -> [{...}] OR []
       return rows;
     } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 
@@ -170,46 +147,112 @@ class AuthMiddleware {
     return !Boolean(user.length);
   }
 
-  private getToken(payload, options: { expiresIn: string } = { expiresIn: '5m' }) {
-    return jwt.sign({ payload }, process.env.JWT_SECRET, options);
-  }
-
+  // Set User Session
   private async setUsrSession(usrDataForSession, req: Request, res: Response) {
     // const salt = await bcrypt.genSaltSync(10);
     // usrDataForSession.id = await bcrypt.hash(usrDataForSession.id, salt);
     // Login and set user session.
     req.session.user = <User>usrDataForSession;
     req.session.user.isAuthenticated = true;
-    // Generate access_token and send response.
-    const at = await this.getToken(`accessId-${req.session.user.mobile}`); // parameter can be any object that we can verify later.
-    const rt = await this.getToken(`userId-${req.session.user.mobile}`); // parameter can be any object that we can verify later.
-    req.session.at = at;
-    req.session.rt = rt;
-    // Set access_token in a response cookie
-    res.cookie('at', req.session.at, { sameSite: 'strict', maxAge: 5 * 60 * 1000 });
-    res.cookie('rt', req.session.rt, { sameSite: 'strict' });
-    // TODO: Implement rotating refresh token.
+    // Generate JWTs
+    // Access Token
+    const at = await AuthMiddleware.getToken(`ACCESS_ID-${req.session.user.mobile}`);
+    // Refresh Token
+    const rt = await AuthMiddleware.getToken(`REFRESH_ACCESS_ID-${req.session.user.mobile}`, { expiresIn: AuthMiddleware.REFRESH_TOKEN_EXPIRY });
+    // and set respective cookies.
+    res.cookie('at', at, { sameSite: 'strict', maxAge: AuthMiddleware.ACCESS_TOKEN_EXPIRY });
+    res.cookie('rt', rt, { sameSite: 'strict', maxAge: AuthMiddleware.REFRESH_TOKEN_EXPIRY });
+    // TODO: Implement rotating Refresh Token.
+    // TODO: DFP & 'Remember Me'
+  }
+
+  // Set JWT
+  static getToken(payload, options: { expiresIn: number } = { expiresIn: AuthMiddleware.ACCESS_TOKEN_EXPIRY }) {
+    return jwt.sign({ payload }, process.env.JWT_SECRET, options);
+  }
+
+  // Decode JWT
+  static decodeToken(token) {
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
+    }
+    return decoded?.payload;
   }
 
   // Use the following middleware on each request by using it as app.use(...);
-  public static async isAuthenticated(req: Request, res: Response, next: NextFunction) {
-    if (req?.session?.user?.isAuthenticated) {
-      // User is authenticated
-      next();
-    } else {
-      throw new BaseError('ERR_NOT_AUTHENTICATED');
+  // I have used both JWT as well as Session.
+  // Server Side Session cookie and the JWT 'rt' (Refresh Token) both have expiry of 10d.
+  // JWT 'at' (Access Token) has expiry of 1h.
+  static async isAuthenticated(req: Request, res: Response, next: NextFunction) {
+    try {
+      let at, rt;
+      if (['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'].some(method => method === req.method)) {
+        at = req.header('Authorization');
+        rt = req.header('X-AUTH-TOKEN');
+      } else {
+        at = CookieHelper.getCookie(req, 'at');
+        rt = CookieHelper.getCookie(req, 'rt');
+        if (!rt) {
+          // User is not logged in...
+          throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
+        }
+      }
+      if (!rt) {
+        // Logout
+        AuthMiddleware.logout(req, res, next);
+      }
+      if (!req?.session?.user?.isAuthenticated) {
+        // Logout
+        AuthMiddleware.logout(req, res, next);
+      }
+      if (!at) {
+        // Renew Access Token
+        // First Verify the Refresh Token
+        if (AuthMiddleware.decodeToken(rt) === `REFRESH_ACCESS_ID-${req.session.user.mobile}`) {
+          at = await AuthMiddleware.getToken(`ACCESS_ID-${req.session.user.mobile}`);
+          res.cookie('at', at, { sameSite: 'strict', maxAge: AuthMiddleware.ACCESS_TOKEN_EXPIRY });
+        } else {
+          // Refresh Token is invalid.
+          throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
+        }
+      }
+      // At this point - 'at', 'rt', and the session-data, all are present.
+      if (AuthMiddleware.decodeToken(at) === `ACCESS_ID-${req.session.user.mobile}` && AuthMiddleware.decodeToken(rt) === `REFRESH_ACCESS_ID-${req.session.user.mobile}`) {
+        // User authenticated
+        next();
+      } else {
+        // Tokens are invalid.
+        throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
+      }
+    } catch (error) {
+      if (error instanceof BaseError) {
+        // This could be made better than a redirect.
+        res.redirect('/');
+      } else {
+        next(new BaseError(`ERR_USER_NOT_AUTHENTICATED`, error.message));
+      }
     }
   }
 
-  // WIP
-  // public async getUsrByToken(token) {
-  //   try {
-  //     const decodedId = jwt.verify(token, process.env.JWT_SECRET);
-  //     // return await this.findOne({ _id: decoded._id });
-  //   } catch (err) {
-  //     // throw new Error(`Error verifying token: ${err.message}`);
-  //   }
-  // };
+  // Logout
+  static logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      req.session?.destroy(error => {
+        if (error) {
+          next(new BaseError(`ERR_USER_LOGOUT`));
+        }
+      });
+      // an attempt to delete the session and other cookies from client's browser by expiring them.
+      const cookiesArr = ['satr_id', 'ct', 'at', 'rt'];
+      cookiesArr.forEach(c => CookieHelper.deleteCookies(res, c));
+      res.redirect('/');
+    } catch (error) {
+      next(new BaseError(`ERR_USER_LOGOUT`, error.message));
+    }
+  }
 }
 
 export { AuthMiddleware };

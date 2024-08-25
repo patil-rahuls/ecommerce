@@ -1,12 +1,30 @@
 // ################################################################################################################################
 // ## Common ##
-const GENERIC_ERR = 'Please try again!';
+const GENERIC_ERR = `Oops... That's us!`;
+const getCookie = cookieType => {
+  const regxPattern = new RegExp(String.raw`${cookieType}=`);
+  return document.cookie
+    ?.split('; ')
+    ?.filter(c => regxPattern.test(c))?.[0]
+    ?.split('=')?.[1];
+};
 const fetchData = async (url, method = 'GET', data = '', headers = '') => {
   try {
+    const ct = getCookie('ct');
+    const at = getCookie('at');
+    const rt = getCookie('rt');
     const res = await fetch(url, {
       method,
-      headers: headers ? headers : { 'Content-Type': 'application/json' },
-      ...(['PUT', 'POST', 'DELETE'].some(m => m === method) && { body: JSON.stringify(data) })
+      headers: headers
+        ? headers
+        : {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': ct,
+            Authorization: at,
+            'X-AUTH-TOKEN': rt,
+            credentials: 'include'
+          },
+      ...(['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'].some(m => m === method) && { body: JSON.stringify(data) })
     });
     return await res.json();
   } catch (err) {
@@ -20,13 +38,6 @@ const refreshPage = (delay = 1000) => {
   setTimeout(() => {
     window.location.reload();
   }, delay);
-};
-const getCookie = cookieType => {
-  const regxPattern = new RegExp(String.raw`${cookieType}=`);
-  return document.cookie
-    ?.split('; ')
-    ?.filter(c => regxPattern.test(c))?.[0]
-    ?.split('=')?.[1];
 };
 
 // ## Input Validation ##
@@ -56,6 +67,23 @@ const validateAddress = addr => {
 const validatePincode = pc => {
   const regxPattern = new RegExp(/^(\d{6})?$/);
   return pc?.length === 6 && regxPattern.test(pc);
+};
+
+const formatAmount = amount => {
+  return amount.toLocaleString('en-IN', {
+    maximumFractionDigits: 2,
+    style: 'currency',
+    currency: 'INR'
+  });
+};
+const getAmountFromString = strAmount => {
+  if (strAmount && !strAmount.match(/[a-zA-Z]/)) {
+    let numberValue = parseFloat(strAmount.replace(/[ ,₹()]/g, ''));
+    const finalValue = numberValue && !isNaN(numberValue) ? numberValue.toFixed(2) : '0.00';
+    return Number(finalValue);
+  } else {
+    return null;
+  }
 };
 
 const hideElement = sel => {
@@ -140,7 +168,7 @@ const blurOverlay = document.querySelector(`#blurOverlay`);
 const retryBtn = document.querySelector(`#loading input`);
 // ## show loading on anchor clicks ##
 const showLoading = () => {
-  loading.innerText = 'Catchy quote here';
+  loading.querySelector('b').innerText = 'Catchy quote here';
   showElement(loading);
   showElement(blurOverlay);
 };
@@ -171,6 +199,8 @@ const closeLoginForm = () => {
 };
 closeLoginFormSel?.addEventListener('click', closeLoginForm);
 retryBtn?.addEventListener('click', () => {
+  loading.querySelector('b').innerText = `We won't let you wait. Promise :)`;
+  hideElement(retryBtn);
   refreshPage(0);
 });
 document.querySelector(`#login`)?.addEventListener('click', async () => {
@@ -181,11 +211,11 @@ document.querySelector(`#login`)?.addEventListener('click', async () => {
       hideElement(loading);
       showElement(loginForm);
     } else {
-      loading.innerText = GENERIC_ERR;
+      loading.querySelector('b').innerText = GENERIC_ERR;
       showElement(retryBtn);
     }
   } catch (err) {
-    loading.innerText = GENERIC_ERR;
+    loading.querySelector('b').innerText = GENERIC_ERR;
     showElement(retryBtn);
   }
 });
@@ -236,15 +266,20 @@ const login = async () => {
   setBtnState(continueBtn, 'Logging in...', 'loading');
   try {
     const ct = getCookie('ct');
+    // const at = getCookie('at');
+    // const rt = getCookie('rt');
     const resp = await fetchData(
       '/user/verify',
       'POST',
       { userId: loginId.value, passkey: password.value, ct },
-      {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': ct,
-        credentials: 'include'
-      }
+      null
+      // {
+      //   'Content-Type': 'application/json',
+      //   'X-XSRF-TOKEN': ct,
+      //   'Authorization': rt,
+      //   'X-AUTH-TOKEN': at,
+      //   credentials: 'include'
+      // }
     );
     switch (resp.status) {
       case 400:
@@ -308,15 +343,20 @@ continueBtn?.addEventListener('click', async () => {
     continueBtn.disabled = true;
     try {
       const ct = getCookie('ct');
+      // const at = getCookie('at');
+      // const rt = getCookie('rt');
       const resp = await fetchData(
         '/user/auth',
         'POST',
         { userId: loginId.value, ct },
-        {
-          'Content-Type': 'application/json',
-          'X-XSRF-TOKEN': ct,
-          credentials: 'include'
-        }
+        null
+        // {
+        //   'Content-Type': 'application/json',
+        //   'X-XSRF-TOKEN': ct,
+        //   'Authorization': rt,
+        //   'X-AUTH-TOKEN': at,
+        //   credentials: 'include'
+        // }
       );
       setBtnState(continueBtn, 'LOGIN');
       switch (resp.status) {
@@ -392,12 +432,22 @@ const updateProfile = async () => {
   try {
     if (Object.keys(itemsToBeUpdated).length) {
       const ct = getCookie('ct');
+      // const rt = getCookie('rt');
+      // const at = getCookie('at');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchData('/user/profile', 'POST', itemsToBeUpdated, {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': ct,
-        credentials: 'include'
-      });
+      const resp = await fetchData(
+        '/user/profile',
+        'POST',
+        itemsToBeUpdated,
+        null
+        // {
+        //   'Content-Type': 'application/json',
+        //   'X-XSRF-TOKEN': ct,
+        //   'Authorization': rt,
+        //   'X-AUTH-TOKEN': at,
+        //   credentials: 'include'
+        // }
+      );
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
       if (resp.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
@@ -606,12 +656,22 @@ saveAddrBtn?.addEventListener('click', async () => {
     let ok;
     try {
       const ct = getCookie('ct');
+      // const rt = getCookie('rt');
+      // const at = getCookie('at');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchData('/user/address', 'POST', itemsToBeUpdated, {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': ct,
-        credentials: 'include'
-      });
+      const resp = await fetchData(
+        '/user/address',
+        'POST',
+        itemsToBeUpdated,
+        null
+        // {
+        //   'Content-Type': 'application/json',
+        //   'X-XSRF-TOKEN': ct,
+        //   'Authorization': rt,
+        //   'X-AUTH-TOKEN': at,
+        //   credentials: 'include'
+        // }
+      );
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
       if (resp.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
@@ -652,16 +712,26 @@ defAddr?.forEach(defAddrBtn => {
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
+      // const rt = getCookie('rt');
+      // const at = getCookie('at');
       const id = defAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
       if (!id || isNaN(id)) {
         throw new Error();
       }
       const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData('/user/address', 'PUT', itemsToBeUpdated, {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': ct,
-        credentials: 'include'
-      });
+      const resp = await fetchData(
+        '/user/address',
+        'PUT',
+        itemsToBeUpdated,
+        null
+        // {
+        //   'Content-Type': 'application/json',
+        //   'X-XSRF-TOKEN': ct,
+        //   'Authorization': rt,
+        //   'X-AUTH-TOKEN': at,
+        //   credentials: 'include'
+        // }
+      );
       switch (resp.status) {
         case 200:
           loading.classList.add('success');
@@ -686,16 +756,26 @@ delAddr?.forEach(delAddrBtn => {
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
+      // const rt = getCookie('rt');
+      // const at = getCookie('at');
       const id = delAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
       if (!id || isNaN(id)) {
         throw new Error();
       }
       const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData('/user/address', 'DELETE', itemsToBeUpdated, {
-        'Content-Type': 'application/json',
-        'X-XSRF-TOKEN': ct,
-        credentials: 'include'
-      });
+      const resp = await fetchData(
+        '/user/address',
+        'DELETE',
+        itemsToBeUpdated,
+        null
+        // {
+        //   'Content-Type': 'application/json',
+        //   'X-XSRF-TOKEN': ct,
+        //   'Authorization': rt,
+        //   'X-AUTH-TOKEN': at,
+        //   credentials: 'include'
+        // }
+      );
       switch (resp.status) {
         case 200:
           loading.classList.add('success');
@@ -711,6 +791,50 @@ delAddr?.forEach(delAddrBtn => {
       loading.innerText = 'Something went wrong!';
     }
     refreshPage();
+  });
+});
+
+// ## Cart ##
+const reduceQtyBtns = document.querySelectorAll(`.qty input[value="-"]`);
+const addQtyBtns = document.querySelectorAll(`.qty input[value="+"]`);
+reduceQtyBtns?.forEach(reduceQtyBtn => {
+  reduceQtyBtn.addEventListener('click', function () {
+    const qtyElem = reduceQtyBtn.parentElement.querySelector('.qtyValue');
+    const discount = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
+    const actualPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
+    const sellingPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
+    const deliveryDate = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
+    qtyElem.value = Number(qtyElem.value) - 1;
+    if (qtyElem.value <= 0) {
+      qtyElem.value = 1;
+      reduceQtyBtn.disabled = true;
+    } else {
+      reduceQtyBtn.disabled = false;
+    }
+    // Send request to respective service to GET updated price.
+    // We can't directly multiply price with qty because in actual ecommerce
+    // there are certain rules, that apply to the sale of a particular product.
+    // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
+    // following implementation is totally wrong.
+    // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
+    // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
+  });
+});
+addQtyBtns?.forEach(addQtyBtn => {
+  addQtyBtn.addEventListener('click', function () {
+    const qtyElem = addQtyBtn.parentElement.querySelector('.qtyValue');
+    const discount = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
+    const actualPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
+    const sellingPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
+    const deliveryDate = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
+    qtyElem.value = Number(qtyElem.value) + 1;
+    // Send request to respective service to GET updated price.
+    // We can't directly multiply price with qty because in actual ecommerce
+    // there are certain rules, that apply to the sale of a particular product.
+    // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
+    // following implementation is totally wrong.
+    // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
+    // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
   });
 });
 
@@ -730,3 +854,14 @@ document.onclick = function (e) {
     hideSearchResults();
   }
 };
+
+// ################################################################################################################################
+// Show loading before images are loaded ...
+Array.from(document.images)
+  .filter(imgElem => imgElem.classList.contains('img-item'))
+  .map(
+    imgElem =>
+      (imgElem.onload = function () {
+        imgElem.src = imgElem.getAttribute('data-src');
+      })
+  );

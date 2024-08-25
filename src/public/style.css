@@ -200,7 +200,7 @@ select {
   border-radius: 10px;
 }
 .logo {
-  margin-right: 1.5rem;
+  margin: 0 10px;
   background-color: transparent;
   color: var(--dark);
   width: max-content;
@@ -208,7 +208,24 @@ select {
 .logo .icon-logo {
   vertical-align: middle;
   width: auto; /* if logo is square then set to 42px;*/
+  max-width: 96px;
   height: 42px;
+}
+.tag {
+  color: var(--light) !important;
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+}
+.tag.success {
+  background-color: var(--success) !important;
+}
+.tag.warn {
+  background-color: var(--loading-color) !important;
+}
+.tag.cancel {
+  background-color: var(--medium-grey) !important;
 }
 
 /* Layout */
@@ -318,6 +335,10 @@ main * {
   align-items: center;
   column-gap: 1rem;
 }
+#cart {
+  padding: 0.3rem;
+  font-size: x-large;
+}
 #cartItemCount {
   font-size: 12px;
   background: var(--primary-color);
@@ -332,9 +353,8 @@ main * {
 #hamburger {
   display: none;
   padding: 0.1rem;
-  margin-left: 1rem;
   font-size: 1.9rem;
-  color: var(--fine-grey);
+  margin-left: -20px;
 }
 #account-dropdown {
   position: absolute;
@@ -609,15 +629,12 @@ main .add-address {
   height: 180px;
   background-color: var(--light);
 }
-.profileForm .blur-load {
-  margin: 0;
-  width: 180px;
-  height: 180px;
-  background-image: url(/loading.gif);
-  background-size: contain;
-  background-position: center;
+.profileForm.orders .cart-item img {
+  width: 100px;
+  height: 100px;
+  background-color: var(--light);
 }
-.profileForm .blur-load img {
+.profileForm img.img-item {
   margin: 0;
   object-fit: contain;
   object-position: center;
@@ -657,6 +674,10 @@ main .add-address {
 .profileForm .wishlist-item .actual-price {
   color: var(--fine-grey);
   text-decoration: line-through;
+}
+.profileForm .continue-shopping {
+  width: auto;
+  margin: 0 auto;
 }
 
 /* User Cart Page */
@@ -776,6 +797,10 @@ main .add-address {
   border-top: 1px solid var(--light-grey);
   background-color: var(--light);
 }
+/* My Orders */
+.profileForm .order-status {
+  margin-top: 12px;
+}
 
 /* Footer */
 #footer {
@@ -820,6 +845,8 @@ main .add-address {
     left: 0;
     min-height: 100vh;
     width: 100vw;
+    overflow: auto;
+    z-index: 99;
   }
   .menu-bar li:first-child ul:nth-child(1) {
     border-right: none;
@@ -886,6 +913,8 @@ main .add-address {
   }
   #nav-menu .container {
     font-size: x-large;
+    justify-content: space-between;
+    padding: 1.2rem 3rem !important;
   }
   #nav-menu .container #login b {
     font-size: larger;
@@ -940,7 +969,10 @@ main .add-address {
     display: none;
   }
 }
-/* 
-@media (min-width: 320px && max-width: 360px) {
-  Minimum viewport supported is 360px, just because playing around with css is consuming a lot of time.
+
+/* @media (min-width: 600px) and (max-width: 770px) {
+  .logo .icon-logo {
+    /* show square icon logo * /
+    width: 42px;
+  }
 } */

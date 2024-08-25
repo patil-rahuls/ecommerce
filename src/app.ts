@@ -63,7 +63,7 @@ class App {
         //   password: ''
         // }),
         cookie: {
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
           sameSite: 'strict',
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production' ? true : false

@@ -1,6 +1,6 @@
 <main>
   <h2>MY ORDERS</h2>
-  <div class="profileForm cart">
+  <div class="profileForm cart orders">
     <table>
       <tbody>
         <!-- <tr>
@@ -12,28 +12,25 @@
         <tr>
           <td class="cart-item">
             <a>
-              <div class="blur-load">
-                <img src="/product.jpeg" loading="lazy" />
-              </div>
+              <img src="/loading.png" class="img-item" data-src="/product.jpeg" loading="lazy" />
             </a>
             <a>
-              <span class="product-title">Product Title</span>
-              <span class="product-attr">Color: Red, Size: L</span>
+              <span class="product-title">Product Brand's Product Title WITH Product's salient features</span>
               <br />
-              <br />
-              <span><b>Qty: 1</b></span>
+              <h4 class="actual-price">Rs. 4,199</h4>
             </a>
-            <div class="price-container">
-              <h4 class="success">15% Off</h4>
-              <h4 class="actual-price">Rs.4,199</h4>
-              <h3>Rs.2,999</h3>
-              <small>Delivered on 24 Sep. 2024</small>
-            </div>
           </td>
           <td class="cart-item">
-            <input type="button" class="btn btn-primary" value="Wishlist" />
-            <input type="button" class="btn" value=" " />
-            <i class="fa fa-trash"></i>
+            <input type="button" class="btn btn-primary" value="INVOICE" />
+            <!-- <input type="button" class="btn btn-primary" value="TRACK" /> -->
+            <% if(i==2) { %>
+            <div class="order-status">
+              <small class="tag warn">Shipped on 24 Sep. 2024</small>
+            </div>
+            <% } %>
+            <div class="order-status">
+              <small class="tag success">Delivered on 24 Sep. 2024</small>
+            </div>
           </td>
         </tr>
         <% } %>

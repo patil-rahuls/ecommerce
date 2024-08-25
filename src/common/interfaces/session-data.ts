@@ -5,9 +5,7 @@ declare module 'express-session' {
   interface SessionData {
     user: User;
     otp: string;
-    ct: string; // csrf token
-    at: string; // auth token
-    rt: string; // refresh token
+    ct: string; // CSRF Token
     preSessionId?: string;
     lastOtpAt: any;
   }

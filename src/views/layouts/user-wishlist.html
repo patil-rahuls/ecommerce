@@ -1,32 +1,38 @@
 <main>
-  <h2>MY WISHLIST <span>(5 Items)</span></h2>
+  <% const wishlistItems = data?.wishlist; %>
+  <h2>MY WISHLIST <% if(wishlistItems?.length) { %> <span class="right"><%= wishlistItems.length %> Item(s)</span> <% } %></h2>
   <div class="profileForm wishlist">
     <table>
       <tbody>
         <tr>
-          <!-- <td>
-            <p>Nothing here yet...<a href="/">Go to Home</a></p>
-          </td> -->
-          <% for(const i of [1,2,3,4,5]) { %>
+          <% if(wishlistItems?.length) { wishlistItems.forEach(favItem => { %>
           <td class="wishlist-item">
-            <a>
-              <div class="blur-load">
-                <img src="/product.jpeg" loading="lazy" />
-              </div>
+            <a href="<%= favItem.url || '/' %>">
+              <img src="/loading.png" class="img-item" data-src="<%= favItem.img %>" loading="lazy" />
               <br />
-              <span class="product-title">Product Title</span>
-              <div class="rating-stars" style="--rating: 4.3" aria-label="Rating of this product is 4.3 out of 5.">★★★★★</div>
+              <span class="product-title"><%= favItem.title %></span>
+              <div class="rating-stars" style="--rating: <%= favItem.rating %>" aria-label="Rating of this product is <%= favItem.rating %> out of 5.">★★★★★</div>
               <div class="price-container">
-                <h4 class="success">15% Off</h4>
-                <h4 class="actual-price">Rs.4,199</h4>
-                <h3>Rs.2,999</h3>
+                <h4 class="success"><%= favItem.discount %></h4>
+                <h4 class="actual-price"><%= favItem.mrp %></h4>
+                <h3><%= favItem.sellPrice %></h3>
               </div>
             </a>
             <div class="wishlist-cta">
-              <input type="button" class="btn btn-primary-solid" value="Add to Cart" />
-              <input type="button" class="btn" value=" " />
+              <input type="input" class="hide" hidden="true" value="<%= favItem.id %>" />
+              <input type="button" class="btn btn-primary-solid add2cart" value="Add to Cart" />
+              <input type="button" class="btn removeItem" value=" " />
               <i class="fa-solid fa-trash" aria-hidden="true"></i>
             </div>
+          </td>
+          <% }); } else { %>
+          <td>
+            <p>
+              Nothing here yet...
+              <button class="continue-shopping btn btn-primary">
+                <a href="/">Continue Shopping...</a>
+              </button>
+            </p>
           </td>
           <% } %>
         </tr>

@@ -1,352 +1,302 @@
 import { Request, Response, NextFunction } from 'express';
 import { DB } from '../middlewares/db.js';
 import { BaseError } from '../middlewares/error-middleware.js';
-import { AuthMiddleware } from './user-auth-middleware.js';
 import { InputValidator } from '../common/input-validator.js';
+import { REDIS_INSTANCE } from '../common/redis.js';
+import { ProductMiddleware } from '../product/product-middleware.js';
 
+const product = new ProductMiddleware();
 class UserMiddleware {
+  // Profile Page
   public async profile(req: Request, res: Response, next: NextFunction) {
     try {
-      if (req.session?.user?.isAuthenticated) {
-        const dbConn = await DB.createConnection(res);
-        const userAddresses = await this.getUserAddresses(dbConn, req.session.user.id);
-        DB.releaseConnection(res);
-        req.session.user.allAddresses = userAddresses;
-        res.render('index', {
-          layout: 'user-profile',
-          data: req.session.user
-        });
-      } else {
-        res.redirect('index');
-      }
+      const dbConn = await DB.createConnection(res);
+      const userAddresses = await this.getUserAddresses(dbConn, req.session.user.id);
+      DB.releaseConnection(res);
+      req.session.user.allAddresses = userAddresses;
+      res.render('index', {
+        layout: 'user-profile',
+        data: req.session.user
+      });
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
       }
     }
   }
 
+  // Edit Profile Details
   public async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const validationErrors: any = {};
-      if (req.session?.user?.isAuthenticated) {
-        const { name = '', email = '', gender = '', password = '', repassword = '', ct = '' } = req.body;
-        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
-        }
-        const dataTobeUpdated: any = {};
-        // Input Validations.
-        if (name) {
-          if (name !== req.session.user.name) {
-            if (InputValidator.validateName(name)) {
-              dataTobeUpdated.name = name;
-            } else {
-              // throw new BaseError(`INVALID_NAME`);
-              validationErrors.nameErr = 'Invalid Name';
-            }
-          }
-        } else if (!name && req.session.user.name) {
-          validationErrors.nameErr = 'Please enter Name';
-        }
-        if (email) {
-          if (email !== req.session.user.email) {
-            if (InputValidator.validateEmail(email)) {
-              dataTobeUpdated.email = email;
-            } else {
-              // throw new BaseError(`INVALID_EMAIL`);
-              validationErrors.emailErr = 'Invalid Email ID';
-            }
-          }
-        } else if (!email && req.session.user.email) {
-          validationErrors.emailErr = 'Please enter an Email';
-        }
-        if (gender) {
-          if (gender !== req.session.user.gender) {
-            if (InputValidator.validateGender(gender)) {
-              dataTobeUpdated.gender = gender;
-            } else {
-              // throw new BaseError(`INVALID_GENDER`);
-              validationErrors.genderErr = 'Please select a Gender';
-            }
-          }
-        } else if (!gender && req.session.user.gender) {
-          validationErrors.genderErr = 'Please select a Gender';
-        }
-        if (password) {
-          // if(!await bcrypt.compare(password, req.session.user.password)){
-          if (password !== req.session.user.password) {
-            if (!InputValidator.validatePassword(password)) {
-              // throw new BaseError(`INVALID_PASSWORD`);
-              validationErrors.profilePasswordErr = 'Please try another one';
-            } else if (password !== repassword) {
-              // throw new BaseError(`CONFIRM_PASSWORD_ERR`);
-              validationErrors.profileRePasswordErr = "Passwords didn't match";
-            } else {
-              dataTobeUpdated.password = password;
-            }
-          }
-        }
-        if (Object.keys(validationErrors).length) {
-          res.json({
-            status: 422,
-            validationErrors
-          });
-        } else if (Object.keys(dataTobeUpdated).length) {
-          // Update
-          const dbConn = await DB.createConnection(res);
-          const result = await this.updateUser(dbConn, dataTobeUpdated, req.session.user.id);
-          DB.releaseConnection(res);
-          if (result?.affectedRows) {
-            // Update session.
-            Object.entries(dataTobeUpdated).forEach(([k, v]) => {
-              req.session.user[k] = v;
-            });
-            res.json({
-              status: 200,
-              userMessage: `Updated Successfully!`
-            });
+      const { name = '', email = '', gender = '', password = '', repassword = '' } = req.body;
+      const dataTobeUpdated: any = {};
+      // Input Validations.
+      if (name) {
+        if (name !== req.session.user.name) {
+          if (InputValidator.validateName(name)) {
+            dataTobeUpdated.name = name;
           } else {
-            throw new BaseError(`ERR_PROFILE_UPDATE_FAILED`);
-            // res.json({
-            //   status: 500,
-            //   userMessage: `Something went wrong!`
-            // });
+            validationErrors.nameErr = 'Invalid Name';
           }
-        } else {
-          res.json({
-            status: 304,
-            userMessage: `No change detected.`
-          });
         }
-      } else {
-        res.redirect('index');
+      } else if (!name && req.session.user.name) {
+        validationErrors.nameErr = 'Please enter Name';
       }
-    } catch (error) {
-      if (error instanceof BaseError) {
-        next(error);
-      } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
-      }
-    }
-  }
-
-  public async updateAddress(req: Request, res: Response, next: NextFunction) {
-    try {
-      const validationErrors: any = {};
-      if (req.session?.user?.isAuthenticated) {
-        let { addrName = '', addrLine1 = '', addrLine2 = '' } = req.body;
-        const { addrMobile = '', addrPincode = '', addrType = '', id = '', ct = '' } = req.body;
-        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
-        }
-        const dataTobeUpdated: any = {};
-        // Input Validations
-        addrName = addrName.trim();
-        if (addrName && InputValidator.validateName(addrName)) {
-          dataTobeUpdated.name = addrName;
-        } else {
-          validationErrors.addrNameErr = 'Invalid Name';
-        }
-        if (addrMobile && InputValidator.validateMobileNumber(addrMobile)) {
-          dataTobeUpdated.mobile = addrMobile;
-        } else {
-          validationErrors.addrMobileErr = 'Invalid Mobile Number';
-        }
-        if (addrPincode && InputValidator.validatePincode(addrPincode)) {
-          dataTobeUpdated.pincode = addrPincode;
-        } else {
-          validationErrors.addrPincodeErr = 'Invalid Pincode';
-        }
-        if (addrType && InputValidator.validateAddrType(addrType)) {
-          dataTobeUpdated.addressType = addrType;
-        } else {
-          validationErrors.addrTypeErr = 'Please select address type';
-        }
-        [addrLine1, addrLine2] = [addrLine1, addrLine2].map(addTxt => addTxt.trim());
-        dataTobeUpdated.addressText = '';
-        [addrLine1, addrLine2].forEach((addrTxt, i) => {
-          if (addrTxt && InputValidator.validateAddress(addrTxt)) {
-            // dataTobeUpdated[`addrLine${i}`] = addrTxt;
-            dataTobeUpdated.addressText += addrTxt + ' ';
+      if (email) {
+        if (email !== req.session.user.email) {
+          if (InputValidator.validateEmail(email)) {
+            dataTobeUpdated.email = email;
           } else {
-            validationErrors[`addrLine${i}Err`] = 'Invalid address text';
+            validationErrors.emailErr = 'Invalid Email ID';
           }
+        }
+      } else if (!email && req.session.user.email) {
+        validationErrors.emailErr = 'Please enter an Email';
+      }
+      if (gender) {
+        if (gender !== req.session.user.gender) {
+          if (InputValidator.validateGender(gender)) {
+            dataTobeUpdated.gender = gender;
+          } else {
+            validationErrors.genderErr = 'Please select a Gender';
+          }
+        }
+      } else if (!gender && req.session.user.gender) {
+        validationErrors.genderErr = 'Please select a Gender';
+      }
+      if (password) {
+        // if(!await bcrypt.compare(password, req.session.user.password)){
+        if (password !== req.session.user.password) {
+          if (!InputValidator.validatePassword(password)) {
+            validationErrors.profilePasswordErr = 'Please try another one';
+          } else if (password !== repassword) {
+            validationErrors.profileRePasswordErr = "Passwords didn't match";
+          } else {
+            dataTobeUpdated.password = password;
+          }
+        }
+      }
+      if (Object.keys(validationErrors).length) {
+        res.json({
+          status: 422,
+          validationErrors
         });
-        if (Object.keys(validationErrors).length) {
-          res.json({
-            status: 422,
-            validationErrors
-          });
-        } else if (Object.keys(dataTobeUpdated).length === 5) {
-          dataTobeUpdated.addressText = dataTobeUpdated.addressText.trim();
-          const dbConn = await DB.createConnection(res);
-          if (id) {
-            // Update
-            const result = await this.updateUserAddress(dbConn, dataTobeUpdated, req.session?.user?.id, id);
-            DB.releaseConnection(res);
-            if (!result?.affectedRows) {
-              throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
-              // res.json({
-              //   status: 500,
-              //   userMessage: `Something went wrong!`
-              // });
-            }
-            // Update session.
-            const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
-            Object.entries(dataTobeUpdated).forEach(([k, v]) => {
-              req.session.user.allAddresses[i][k] = v;
-            });
-            res.json({
-              status: 200,
-              userMessage: `Address Updated!`
-            });
-          } else {
-            // Add
-            dataTobeUpdated['user_id'] = req.session?.user?.id;
-            const result = await this.insertUserAddress(dbConn, dataTobeUpdated);
-            DB.releaseConnection(res);
-            if (!result?.insertId) {
-              throw new BaseError(`ERR_COULDNT_SAVE_USER`);
-            }
-            // delete dataTobeUpdated['user_id'];
-            // Update session
-            req.session.user.allAddresses.push(dataTobeUpdated);
-            res.json({
-              status: 201,
-              userMessage: `Address Saved!`
-            });
-          }
-        }
-      } else {
-        res.redirect('index');
-      }
-    } catch (error) {
-      if (error instanceof BaseError) {
-        next(error);
-      } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
-      }
-    }
-  }
-
-  public async deleteAddress(req: Request, res: Response, next: NextFunction) {
-    try {
-      if (req.session?.user?.isAuthenticated) {
-        const { id = '', ct = '' } = req.body;
-        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
-        }
-        if (!id || isNaN(id)) {
-          throw new BaseError(`ERR_ADDRESS_DELETE_FAILED`);
-        }
-        // Delete
+      } else if (Object.keys(dataTobeUpdated).length) {
+        // Update
         const dbConn = await DB.createConnection(res);
-        const result = await this.deleteUserAddress(dbConn, req.session.user.id, id);
+        const result = await this.updateUser(dbConn, dataTobeUpdated, req.session.user.id);
         DB.releaseConnection(res);
         if (result?.affectedRows) {
           // Update session.
-          const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
-          req.session.user.allAddresses.splice(i, 1);
-          res.json({
-            status: 200,
-            userMessage: `Address Removed!`
+          Object.entries(dataTobeUpdated).forEach(([k, v]) => {
+            req.session.user[k] = v;
           });
-        } else {
-          throw new BaseError(`ERR_ADDRESS_DELETE_FAILED`);
-          // res.json({
-          //   status: 500,
-          //   userMessage: `Something went wrong!`
-          // });
-        }
-      } else {
-        res.redirect('index');
-      }
-    } catch (error) {
-      if (error instanceof BaseError) {
-        next(error);
-      } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
-      }
-    }
-  }
-
-  public async setDefaultAddress(req: Request, res: Response, next: NextFunction) {
-    try {
-      if (req.session?.user?.isAuthenticated) {
-        const { id = '', ct = '' } = req.body;
-        if (!AuthMiddleware.isRequestAuthorized(req, ct)) {
-          throw new BaseError('ERR_UNAUTHORIZED_PROFILE_EDIT_ATTEMPT');
-        }
-        if (!id || isNaN(id)) {
-          throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
-        }
-        // Update user - Set Default Address
-        const dbConn = await DB.createConnection(res);
-        const result = await this.setUserDefaultAddress(dbConn, req.session.user.id, id);
-        DB.releaseConnection(res);
-        if (result?.affectedRows) {
-          // update session
-          req.session.user.defaultBillingAddress = Number(id);
-          req.session.user.defaultShippingAddress = Number(id);
           res.json({
             status: 200,
             userMessage: `Updated Successfully!`
           });
         } else {
-          throw new BaseError(`ERR_ADDR_UPDATE_FAILED`);
-          // res.json({
-          //   status: 500,
-          //   userMessage: `Something went wrong!`
-          // });
+          throw new BaseError(`ERR_USER_PROFILE_UPDATE_FAILED`);
         }
       } else {
-        res.redirect('index');
+        res.json({
+          status: 304,
+          userMessage: `Looks Good!`
+        });
       }
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_PROFILE_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
       }
     }
   }
 
-  // WIP
-  public async wishlist(req: Request, res: Response, next: NextFunction) {
+  // Edit Address
+  public async updateAddress(req: Request, res: Response, next: NextFunction) {
     try {
-      // Only for UI dev...
-      res.render('index', {
-        layout: 'user-wishlist',
-        data: null
+      const validationErrors: any = {};
+      let { addrName = '', addrLine1 = '', addrLine2 = '' } = req.body;
+      const { addrMobile = '', addrPincode = '', addrType = '', id = '' } = req.body;
+      const dataTobeUpdated: any = {};
+      // Input Validations
+      addrName = addrName.trim();
+      if (addrName && InputValidator.validateName(addrName)) {
+        dataTobeUpdated.name = addrName;
+      } else {
+        validationErrors.addrNameErr = 'Invalid Name';
+      }
+      if (addrMobile && InputValidator.validateMobileNumber(addrMobile)) {
+        dataTobeUpdated.mobile = addrMobile;
+      } else {
+        validationErrors.addrMobileErr = 'Invalid Mobile Number';
+      }
+      if (addrPincode && InputValidator.validatePincode(addrPincode)) {
+        dataTobeUpdated.pincode = addrPincode;
+      } else {
+        validationErrors.addrPincodeErr = 'Invalid Pincode';
+      }
+      if (addrType && InputValidator.validateAddrType(addrType)) {
+        dataTobeUpdated.addressType = addrType;
+      } else {
+        validationErrors.addrTypeErr = 'Please select address type';
+      }
+      [addrLine1, addrLine2] = [addrLine1, addrLine2].map(addTxt => addTxt.trim());
+      dataTobeUpdated.addressText = '';
+      [addrLine1, addrLine2].forEach((addrTxt, i) => {
+        if (addrTxt && InputValidator.validateAddress(addrTxt)) {
+          // dataTobeUpdated[`addrLine${i}`] = addrTxt;
+          dataTobeUpdated.addressText += addrTxt + ' ';
+        } else {
+          validationErrors[`addrLine${i}Err`] = 'Invalid address text';
+        }
       });
-      /*
-      if (req.session?.user?.isAuthenticated) {
+      if (Object.keys(validationErrors).length) {
+        res.json({
+          status: 422,
+          validationErrors
+        });
+      } else if (Object.keys(dataTobeUpdated).length === 5) {
+        dataTobeUpdated.addressText = dataTobeUpdated.addressText.trim();
         const dbConn = await DB.createConnection(res);
-        const userWishlist = await this.getUserWishlist(dbConn, req.session.user.id);
-        DB.releaseConnection(res);
-        req.session.user.wishlist = userWishlist;
-        res.render('index', {
-          layout: 'user-wishlist',
-          data: req.session.user
+        if (id) {
+          // Update
+          const result = await this.updateUserAddress(dbConn, dataTobeUpdated, req.session?.user?.id, id);
+          DB.releaseConnection(res);
+          if (!result?.affectedRows) {
+            throw new BaseError(`ERR_USER_ADDRESS_UPDATE_FAILED`);
+          }
+          // Update session.
+          const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
+          Object.entries(dataTobeUpdated).forEach(([k, v]) => {
+            req.session.user.allAddresses[i][k] = v;
+          });
+          res.json({
+            status: 200,
+            userMessage: `Address Updated!`
+          });
+        } else {
+          // Add
+          dataTobeUpdated['user_id'] = req.session?.user?.id;
+          const result = await this.insertUserAddress(dbConn, dataTobeUpdated);
+          DB.releaseConnection(res);
+          if (!result?.insertId) {
+            throw new BaseError(`ERR_USER_COULDNT_SAVE`);
+          }
+          // delete dataTobeUpdated['user_id'];
+          // Update session
+          req.session.user.allAddresses.push(dataTobeUpdated);
+          res.json({
+            status: 201,
+            userMessage: `Address Saved!`
+          });
+        }
+      }
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
+      }
+    }
+  }
+
+  // Delete Address
+  public async deleteAddress(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id = '' } = req.body;
+      if (!id || isNaN(id)) {
+        throw new BaseError(`ERR_USER_ADDRESS_DELETE_FAILED`);
+      }
+      // Delete
+      const dbConn = await DB.createConnection(res);
+      const result = await this.deleteUserAddress(dbConn, req.session.user.id, id);
+      DB.releaseConnection(res);
+      if (result?.affectedRows) {
+        // Update session.
+        const i = req.session.user.allAddresses.findIndex(addr => addr.id === Number(id));
+        req.session.user.allAddresses.splice(i, 1);
+        res.json({
+          status: 200,
+          userMessage: `Address Removed!`
         });
       } else {
-        res.redirect('index');
+        throw new BaseError(`ERR_USER_ADDRESS_DELETE_FAILED`);
       }
-      // */
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
       }
     }
   }
 
-  // WIP
-  public updateWishlist(req: Request, res: Response, next: NextFunction) {
+  // Set Address as Default
+  public async setDefaultAddress(req: Request, res: Response, next: NextFunction) {
     try {
+      const { id = '' } = req.body;
+      if (!id || isNaN(id)) {
+        throw new BaseError(`ERR_USER_ADDRESS_UPDATE_FAILED`);
+      }
+      // Update user - Set Default Address
+      const dbConn = await DB.createConnection(res);
+      const result = await this.setUserDefaultAddress(dbConn, req.session.user.id, id);
+      DB.releaseConnection(res);
+      if (result?.affectedRows) {
+        // update session
+        req.session.user.defaultBillingAddress = Number(id);
+        req.session.user.defaultShippingAddress = Number(id);
+        res.json({
+          status: 200,
+          userMessage: `Updated Successfully!`
+        });
+      } else {
+        throw new BaseError(`ERR_USER_ADDRESS_UPDATE_FAILED`);
+      }
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
+      }
+    }
+  }
+
+  // Get Wishlist
+  public async wishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      req.session.user.wishlist = await this.getUserWishlist(req.session.user.id);
+      res.render('index', {
+        layout: 'user-wishlist',
+        data: req.session.user
+      });
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_USER_WISHLIST_PAGE`, error.message));
+      }
+    }
+  }
+
+  // Add/Remove Wishlist Products
+  public async updateWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { productId = '' } = req.body;
+      switch (req.method) {
+        case 'DELETE':
+          await this.editUserWishlist(req.session.user.id, productId, false);
+          break;
+        case 'POST':
+          await this.editUserWishlist(req.session.user.id, productId);
+          break;
+      }
+      // TODO: Send Updated User Wishlist to Queue to update MySQL DB.
       res.json({
         status: 200,
         userMessage: `Wishlist Updated!`
@@ -355,7 +305,7 @@ class UserMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_WISHLIST_PAGE`, error.message));
       }
     }
   }
@@ -363,7 +313,7 @@ class UserMiddleware {
   // WIP
   public async cart(req: Request, res: Response, next: NextFunction) {
     try {
-      // Only for UI dev...
+      // DUMMY Only for UI dev...
       res.render('index', {
         layout: 'user-cart',
         data: null
@@ -372,7 +322,7 @@ class UserMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_WISHLIST_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_WISHLIST_PAGE`, error.message));
       }
     }
   }
@@ -380,7 +330,7 @@ class UserMiddleware {
   // WIP
   public async orders(req: Request, res: Response, next: NextFunction) {
     try {
-      // Only for UI dev...
+      // DUMMY Only for UI dev...
       res.render('index', {
         layout: 'user-orders',
         data: null
@@ -394,24 +344,13 @@ class UserMiddleware {
     }
   }
 
+  // ## Queries / Private Methods ## //
   private async getUserAddresses(dbConn, userId) {
     try {
       const [rows] = await dbConn.execute('SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `address` WHERE `user_id` = ?;', [userId]);
-      // rows -> [{...}] OR []
       return rows;
     } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
-    }
-  }
-
-  // WIP
-  private async getUserWishlist(dbConn, userId) {
-    try {
-      const [rows] = await dbConn.execute('SELECT id, product_id FROM `wishlist` WHERE `user_id` = ?;', [userId]);
-      // rows -> [{...}] OR []
-      return rows;
-    } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 
@@ -436,7 +375,7 @@ class UserMiddleware {
         return false;
       }
     } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 
@@ -463,7 +402,7 @@ class UserMiddleware {
         return false;
       }
     } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 
@@ -499,7 +438,7 @@ class UserMiddleware {
         return false;
       }
     } catch (err) {
-      throw new BaseError(`DB_QUERY_ERR`, err.message);
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 
@@ -509,7 +448,7 @@ class UserMiddleware {
       const [chk] = await dbConn.execute(`SELECT id FROM user WHERE default_billing_addr = ? OR default_shipping_addr = ? `, [addrId, addrId]);
       if (chk?.[0]?.id) {
         // address is used as default shipping/billing.
-        throw new BaseError(`ADDRESS_IN_USE_CANT_DELETE`);
+        throw new BaseError(`ERR_USER_ADDRESS_IN_USE_CANT_DELETE`);
       }
       const stmt = `DELETE FROM address WHERE user_id = ? AND id = ? ;`;
       const [result] = await dbConn.execute(stmt, [userId, addrId]);
@@ -519,7 +458,7 @@ class UserMiddleware {
       if (err instanceof BaseError) {
         throw err;
       } else {
-        throw new BaseError(`DB_QUERY_ERR`, err.message);
+        throw new BaseError(`ERR_DB_STMT`, err.message);
       }
     }
   }
@@ -530,7 +469,7 @@ class UserMiddleware {
       const [chk] = await dbConn.execute(`SELECT id FROM address WHERE id = ? `, [addrId]);
       if (!chk?.[0]?.id) {
         // address id doesn't exist in address table. Cant set as default.
-        throw new BaseError(`ADDRESS_NOT_EXISTS_CANT_SET_DEFAULT`);
+        throw new BaseError(`ERR_USER_ADDRESS_NOT_EXISTS_CANT_SET_DEFAULT`);
       }
       const stmt = `UPDATE user SET default_shipping_addr = ?, default_billing_addr = ? WHERE id = ? ;`;
       const [result] = await dbConn.execute(stmt, [addrId, addrId, userId]);
@@ -540,7 +479,58 @@ class UserMiddleware {
       if (err instanceof BaseError) {
         throw err;
       } else {
-        throw new BaseError(`DB_QUERY_ERR`, err.message);
+        throw new BaseError(`ERR_DB_STMT`, err.message);
+      }
+    }
+  }
+
+  private async getUserWishlist(userId) {
+    try {
+      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisRead.connect();
+      // "WISHLIST:USR:<USER_ID>"= [pid1, pid2, pid3, ...]
+      const productIds = await redisRead.sMembers(`WISHLIST:USR:${userId}`);
+      // Prepare wishlist data from "PRODUCT:<PID>"
+      const userWishlist = await Promise.all(
+        productIds.map(async pid => {
+          const productData = await product.getProductDetailsByAttributes(pid, ['id', 'imgThumbnail', 'title', 'rating', 'discountPercentage', 'mrp', 'sellPrice', 'url']);
+          return {
+            id: productData[0],
+            img: productData[1],
+            title: productData[2],
+            rating: productData[3] || 0,
+            discount: productData[4] && `${productData[4]}% Off`,
+            mrp: productData[5] && `₹ ${productData[5]}`,
+            sellPrice: productData[6] && `₹ ${productData[6]}`,
+            url: productData[7] && `${productData[7]}`
+          };
+        })
+      );
+      await redisRead.quit();
+      // Return filtered userWishlist with only those products whose all values are non null.
+      return userWishlist.filter(itm => Object.values(itm).every(attrVal => attrVal));
+    } catch (err) {
+      throw new BaseError(`ERR_REDIS_CMD`, err.message);
+    }
+  }
+
+  private async editUserWishlist(userId, productId, set = true) {
+    try {
+      let result;
+      const redisWrite = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisWrite.connect();
+      if (!set) {
+        result = await redisWrite.sRem(`WISHLIST:USR:${userId}`, [productId]);
+      } else {
+        result = await redisWrite.sAdd(`WISHLIST:USR:${userId}`, productId);
+      }
+      await redisWrite.quit();
+      return result;
+    } catch (err) {
+      if (err instanceof BaseError) {
+        throw err;
+      } else {
+        throw new BaseError(`ERR_REDIS_CMD`, err.message);
       }
     }
   }

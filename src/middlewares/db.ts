@@ -23,7 +23,7 @@ abstract class DB {
         case 'WRITE':
           return DB.writeInstance || this.createDbInstancePool(config);
         default:
-          throw new BaseError(`DB_INSTANCE_NOT_FOUND`);
+          throw new BaseError(`ERR_DB_INSTANCE_NOT_FOUND`);
       }
     } catch (error) {
       if (error instanceof BaseError) {
@@ -75,7 +75,7 @@ abstract class DB {
     const dbInstance = Object.keys(res.locals.DB)?.find(k => res.locals.DB[k] !== null);
     // ^ 'WRITE' or 'READ' or other DB Instance identifier.
     if (!dbInstance) {
-      throw new BaseError('DB_INSTANCE_NOT_FOUND');
+      throw new BaseError('ERR_DB_INSTANCE_NOT_FOUND');
     }
     res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
     LOGGER.info(`MySQL-'${dbInstance}' Connected!`);
