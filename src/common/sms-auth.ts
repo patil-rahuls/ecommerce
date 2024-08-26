@@ -7,7 +7,7 @@ abstract class SMSAuth {
     try {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
-      if (await redisRead.get(`${mobileNum}`)) {
+      if (await redisRead.get(`OTP:USR:${mobileNum}`)) {
         // If OTP exists in redis, it is valid.
         // Check if OTP is requested too soon ie. before 3 minutes.
         const diff = (Date.now() - prevOtpTimeStamp) / 1000 / 60; // minutes
@@ -24,14 +24,14 @@ abstract class SMSAuth {
       let otpSet,
         reAttempts = 0;
       do {
-        otpSet = await redisRead.set(`${mobileNum}`, otp, otpSaveOptions);
+        otpSet = await redisRead.set(`OTP:USR:${mobileNum}`, otp, otpSaveOptions);
         if (reAttempts) {
           LOGGER.warn(`OTP->Redis re-attempt# ${reAttempts}`);
         }
         reAttempts++;
       } while (otpSet !== 'OK' && reAttempts < 2);
       if (otpSet === 'OK') {
-        LOGGER.dev(`OTP-${mobileNum} -> ${await redisRead.get(`${mobileNum}`)}`);
+        LOGGER.dev(`OTP-${mobileNum} -> ${await redisRead.get(`OTP:USR:${mobileNum}`)}`);
         // TODO: here, add the logic to send OTP SMS to `userId` through AWS SQS.
         // if sending SMS fails, do the following
         // 1. Remove that entry from redis and
@@ -41,6 +41,27 @@ abstract class SMSAuth {
       }
       await redisRead.quit();
       throw new BaseError('ERR_USER_OTP_COULDNT_SAVE');
+    } catch (error) {
+      if (error instanceof BaseError) {
+        throw error;
+      } else {
+        throw new BaseError(`ERR_USER_OTP_COULDNT_SEND`, error.message);
+      }
+    }
+  };
+
+  public static readonly verifyOTP = async (mobileNum, givenOTP) => {
+    try {
+      let otpVerified = false;
+      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisRead.connect();
+      const otp = await redisRead.get(`OTP:USR:${mobileNum}`);
+      if (otp && otp === givenOTP) {
+        otpVerified = true;
+        await redisRead.del(`OTP:USR:${mobileNum}`);
+      }
+      await redisRead.quit();
+      return otpVerified;
     } catch (error) {
       if (error instanceof BaseError) {
         throw error;

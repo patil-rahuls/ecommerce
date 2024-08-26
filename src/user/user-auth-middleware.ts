@@ -6,7 +6,6 @@ import { DB } from '../middlewares/db.js';
 import { CookieHelper } from '../common/cookie-helper.js';
 import { InputValidator } from '../common/input-validator.js';
 import { SMSAuth } from '../common/sms-auth.js';
-import { REDIS_INSTANCE } from '../common/redis.js';
 import { User } from '../common/interfaces/user.js';
 
 class AuthMiddleware {
@@ -74,17 +73,12 @@ class AuthMiddleware {
       switch (true) {
         // OTP - 4 digits.
         case passkey?.length === 4 && !isNaN(passkey):
-          const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
-          await redisRead.connect();
-          if (`${passkey}` === (await redisRead.get(`${userId}`))) {
+          if (await SMSAuth.verifyOTP(userId, passkey)) {
             // If user provided OTP matches with that in redis
             otpCorrect = true;
-            await redisRead.del(`${userId}`);
           } else {
-            await redisRead.quit();
             throw new BaseError('ERR_USER_INCORRECT_OTP');
           }
-          await redisRead.quit();
           break;
         // Password - at least 6 digits.
         case passkey?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(passkey):

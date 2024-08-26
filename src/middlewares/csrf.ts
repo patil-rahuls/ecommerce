@@ -36,10 +36,14 @@ abstract class CSRF {
             throw new BaseError(`ERR_INVALID_CSRF_TOKEN`);
           }
         }
+        next();
       } catch (err) {
-        next(err);
+        if (err.code === `ERR_RESOURCE_ATTEMPT_UNAUTHORIZED`) {
+          res.redirect('/404');
+        } else {
+          next(err);
+        }
       }
-      next();
     };
   }
 }

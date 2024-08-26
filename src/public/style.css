@@ -828,6 +828,15 @@ main .add-address {
   text-align: center;
 }
 
+/* 404 Page */
+#layout ._404 {
+  text-align: center;
+}
+#layout ._404 input {
+  margin: 0 auto;
+  width: auto;
+}
+
 @media (max-width: 1100px) {
   #hamburger {
     display: block;

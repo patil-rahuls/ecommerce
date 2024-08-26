@@ -266,21 +266,7 @@ const login = async () => {
   setBtnState(continueBtn, 'Logging in...', 'loading');
   try {
     const ct = getCookie('ct');
-    // const at = getCookie('at');
-    // const rt = getCookie('rt');
-    const resp = await fetchData(
-      '/user/verify',
-      'POST',
-      { userId: loginId.value, passkey: password.value, ct },
-      null
-      // {
-      //   'Content-Type': 'application/json',
-      //   'X-XSRF-TOKEN': ct,
-      //   'Authorization': rt,
-      //   'X-AUTH-TOKEN': at,
-      //   credentials: 'include'
-      // }
-    );
+    const resp = await fetchData('/user/verify', 'POST', { userId: loginId.value, passkey: password.value, ct });
     switch (resp.status) {
       case 400:
       case 422:
@@ -294,7 +280,14 @@ const login = async () => {
         closeLoginFormSel.removeEventListener('click', closeLoginForm);
         closeLoginFormSel.remove();
         setBtnState(continueBtn, 'Just a sec...', 'success');
-        refreshPage();
+        // Redirect to index, if logging in from 404 page.
+        if (window.location.href.includes('/404')) {
+          let returnUrl = window.location.href.split('/');
+          returnUrl.pop();
+          window.location.href = returnUrl.join('/');
+        } else {
+          refreshPage();
+        }
         break;
       default:
         continueBtn.disabled = false;
@@ -343,21 +336,7 @@ continueBtn?.addEventListener('click', async () => {
     continueBtn.disabled = true;
     try {
       const ct = getCookie('ct');
-      // const at = getCookie('at');
-      // const rt = getCookie('rt');
-      const resp = await fetchData(
-        '/user/auth',
-        'POST',
-        { userId: loginId.value, ct },
-        null
-        // {
-        //   'Content-Type': 'application/json',
-        //   'X-XSRF-TOKEN': ct,
-        //   'Authorization': rt,
-        //   'X-AUTH-TOKEN': at,
-        //   credentials: 'include'
-        // }
-      );
+      const resp = await fetchData('/user/auth', 'POST', { userId: loginId.value, ct });
       setBtnState(continueBtn, 'LOGIN');
       switch (resp.status) {
         case 400:
@@ -432,22 +411,8 @@ const updateProfile = async () => {
   try {
     if (Object.keys(itemsToBeUpdated).length) {
       const ct = getCookie('ct');
-      // const rt = getCookie('rt');
-      // const at = getCookie('at');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchData(
-        '/user/profile',
-        'POST',
-        itemsToBeUpdated,
-        null
-        // {
-        //   'Content-Type': 'application/json',
-        //   'X-XSRF-TOKEN': ct,
-        //   'Authorization': rt,
-        //   'X-AUTH-TOKEN': at,
-        //   credentials: 'include'
-        // }
-      );
+      const resp = await fetchData('/user/profile', 'POST', itemsToBeUpdated);
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
       if (resp.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
@@ -656,22 +621,8 @@ saveAddrBtn?.addEventListener('click', async () => {
     let ok;
     try {
       const ct = getCookie('ct');
-      // const rt = getCookie('rt');
-      // const at = getCookie('at');
       itemsToBeUpdated.ct = ct;
-      const resp = await fetchData(
-        '/user/address',
-        'POST',
-        itemsToBeUpdated,
-        null
-        // {
-        //   'Content-Type': 'application/json',
-        //   'X-XSRF-TOKEN': ct,
-        //   'Authorization': rt,
-        //   'X-AUTH-TOKEN': at,
-        //   credentials: 'include'
-        // }
-      );
+      const resp = await fetchData('/user/address', 'POST', itemsToBeUpdated);
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
       if (resp.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
@@ -712,26 +663,12 @@ defAddr?.forEach(defAddrBtn => {
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      // const rt = getCookie('rt');
-      // const at = getCookie('at');
       const id = defAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
       if (!id || isNaN(id)) {
         throw new Error();
       }
       const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData(
-        '/user/address',
-        'PUT',
-        itemsToBeUpdated,
-        null
-        // {
-        //   'Content-Type': 'application/json',
-        //   'X-XSRF-TOKEN': ct,
-        //   'Authorization': rt,
-        //   'X-AUTH-TOKEN': at,
-        //   credentials: 'include'
-        // }
-      );
+      const resp = await fetchData('/user/address', 'PUT', itemsToBeUpdated);
       switch (resp.status) {
         case 200:
           loading.classList.add('success');
@@ -756,26 +693,12 @@ delAddr?.forEach(delAddrBtn => {
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      // const rt = getCookie('rt');
-      // const at = getCookie('at');
       const id = delAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
       if (!id || isNaN(id)) {
         throw new Error();
       }
       const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData(
-        '/user/address',
-        'DELETE',
-        itemsToBeUpdated,
-        null
-        // {
-        //   'Content-Type': 'application/json',
-        //   'X-XSRF-TOKEN': ct,
-        //   'Authorization': rt,
-        //   'X-AUTH-TOKEN': at,
-        //   credentials: 'include'
-        // }
-      );
+      const resp = await fetchData('/user/address', 'DELETE', itemsToBeUpdated);
       switch (resp.status) {
         case 200:
           loading.classList.add('success');

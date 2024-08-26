@@ -89,6 +89,9 @@ class App {
     controllers.forEach(controller => {
       this.app.use(controller.path, controller.router);
     });
+    this.app.use(function (req, res) {
+      res.redirect('/404');
+    });
     LOGGER.info(`Initialized controllers.`);
   }
 
