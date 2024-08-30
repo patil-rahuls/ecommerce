@@ -195,6 +195,8 @@ const loginForm = document.querySelector(`#loginForm`);
 const closeLoginFormSel = document.querySelector(`.close-loginForm`);
 const closeLoginForm = () => {
   closePopup(loginForm);
+  // Remove query parameters.
+  window.history.replaceState(null, document.title, window.location.href.split('?')[0]);
   refreshPage(0); // This may affect UX.
 };
 closeLoginFormSel?.addEventListener('click', closeLoginForm);
@@ -286,7 +288,12 @@ const login = async () => {
           returnUrl.pop();
           window.location.href = returnUrl.join('/');
         } else {
-          refreshPage();
+          // Check if any redirect link is set in the respose.
+          if (resp.redirectUrl) {
+            window.location.href = resp.redirectUrl;
+          } else {
+            refreshPage();
+          }
         }
         break;
       default:
@@ -717,6 +724,69 @@ delAddr?.forEach(delAddrBtn => {
   });
 });
 
+// ################################################################################################################################
+// ## Wishlist ##
+const addToWishlistBtns = document.querySelectorAll(`.addToWishlist`);
+const removeFromWishlistBtns = document.querySelectorAll(`.removeItem`);
+addToWishlistBtns?.forEach(addToWishlistBtn => {
+  addToWishlistBtn.addEventListener('click', async function () {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const productId = addToWishlistBtn.parentElement.querySelector(`input[name="productId"]`).value;
+      if (!productId || isNaN(productId)) {
+        throw new Error();
+      }
+      const payload = { productId, ct };
+      const resp = await fetchData('/user/wishlist', 'POST', payload);
+      switch (resp.status) {
+        case 200:
+          loading.classList.add('success');
+          loading.innerText = resp.userMessage;
+          break;
+        default:
+          loading.classList.add('err');
+          loading.innerText = resp.userMessage;
+          break;
+      }
+    } catch (err) {
+      loading.classList.add('err');
+      loading.innerText = 'Something went wrong!';
+    }
+    // refreshPage();
+  });
+});
+removeFromWishlistBtns?.forEach(removeFromWishlistBtn => {
+  removeFromWishlistBtn.addEventListener('click', async function () {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const productId = removeFromWishlistBtn.parentElement.querySelector(`input[name="productId"]`).value;
+      if (!productId || isNaN(productId)) {
+        throw new Error();
+      }
+      const payload = { productId, ct };
+      const resp = await fetchData('/user/wishlist', 'DELETE', payload);
+      switch (resp.status) {
+        case 200:
+          loading.classList.add('success');
+          loading.innerText = resp.userMessage;
+          break;
+        default:
+          loading.classList.add('err');
+          loading.innerText = resp.userMessage;
+          break;
+      }
+    } catch (err) {
+      loading.classList.add('err');
+      loading.innerText = 'Something went wrong!';
+    }
+    refreshPage();
+  });
+});
+
 // ## Cart ##
 const reduceQtyBtns = document.querySelectorAll(`.qty input[value="-"]`);
 const addQtyBtns = document.querySelectorAll(`.qty input[value="+"]`);
@@ -788,3 +858,14 @@ Array.from(document.images)
         imgElem.src = imgElem.getAttribute('data-src');
       })
   );
+
+// Show login form on page load if requested.
+window.onload = function () {
+  (() => {
+    const loginBtn = document.querySelector(`#login`);
+    if (loginBtn.getAttribute('data-testid') === 'loginRequested') {
+      loginBtn.click();
+      loginBtn.removeAttribute('data-testid');
+    }
+  })();
+};

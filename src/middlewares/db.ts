@@ -2,7 +2,7 @@ import '../config/dotenv.js';
 import db, { Pool } from 'mysql2/promise';
 import { NextFunction, Request, Response } from 'express';
 import { DBInstance, DB_INSTANCE_ARR } from '../common/types.js';
-import { LOGGER } from '../common/logger.js';
+import { LOGGER } from '../middlewares/logger.js';
 import { BaseError } from './error-middleware.js';
 
 abstract class DB {
@@ -63,7 +63,7 @@ abstract class DB {
           WRITE: null
         };
         res.locals.DB[dbInstance] = await DB.getInstance(dbInstance);
-        LOGGER.info(`MySQL-'${dbInstance}' In use`);
+        LOGGER.INFO(`MySQL-'${dbInstance}' In use`);
       } catch (err) {
         next(err);
       }
@@ -78,7 +78,7 @@ abstract class DB {
       throw new BaseError('ERR_DB_INSTANCE_NOT_FOUND');
     }
     res.locals.DB_CONN[dbInstance] = await res.locals.DB[dbInstance].getConnection();
-    LOGGER.info(`MySQL-'${dbInstance}' Connected!`);
+    LOGGER.SUCCESS(`MySQL-'${dbInstance}' Connected!`);
     return res.locals.DB_CONN[dbInstance];
   }
 
@@ -86,7 +86,7 @@ abstract class DB {
     DB_INSTANCE_ARR.forEach(async instance => {
       if (res.locals?.DB_CONN?.[instance]) {
         await res.locals.DB_CONN[instance].release();
-        LOGGER.info(`MYSQL-'${instance}' Released!`);
+        LOGGER.INFO(`MYSQL-'${instance}' Released!`);
       }
     });
   }

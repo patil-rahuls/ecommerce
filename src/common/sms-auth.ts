@@ -1,13 +1,13 @@
 import { REDIS_INSTANCE } from './redis.js';
 import { BaseError } from '../middlewares/error-middleware.js';
-import { LOGGER } from './logger.js';
+import { LOGGER } from '../middlewares/logger.js';
 
 abstract class SMSAuth {
   public static readonly generateSendOTP = async (mobileNum, prevOtpTimeStamp = 0) => {
     try {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
-      if (await redisRead.get(`OTP:USR:${mobileNum}`)) {
+      if (await redisRead.get(`USR:OTP:${mobileNum}`)) {
         // If OTP exists in redis, it is valid.
         // Check if OTP is requested too soon ie. before 3 minutes.
         const diff = (Date.now() - prevOtpTimeStamp) / 1000 / 60; // minutes
@@ -24,14 +24,14 @@ abstract class SMSAuth {
       let otpSet,
         reAttempts = 0;
       do {
-        otpSet = await redisRead.set(`OTP:USR:${mobileNum}`, otp, otpSaveOptions);
+        otpSet = await redisRead.set(`USR:OTP:${mobileNum}`, otp, otpSaveOptions);
         if (reAttempts) {
-          LOGGER.warn(`OTP->Redis re-attempt# ${reAttempts}`);
+          LOGGER.WARN(`OTP->Redis re-attempt# ${reAttempts}`);
         }
         reAttempts++;
       } while (otpSet !== 'OK' && reAttempts < 2);
       if (otpSet === 'OK') {
-        LOGGER.dev(`OTP-${mobileNum} -> ${await redisRead.get(`OTP:USR:${mobileNum}`)}`);
+        LOGGER.SUCCESS(`OTP-${mobileNum} -> ${await redisRead.get(`USR:OTP:${mobileNum}`)}`);
         // TODO: here, add the logic to send OTP SMS to `userId` through AWS SQS.
         // if sending SMS fails, do the following
         // 1. Remove that entry from redis and
@@ -55,10 +55,10 @@ abstract class SMSAuth {
       let otpVerified = false;
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
-      const otp = await redisRead.get(`OTP:USR:${mobileNum}`);
+      const otp = await redisRead.get(`USR:OTP:${mobileNum}`);
       if (otp && otp === givenOTP) {
         otpVerified = true;
-        await redisRead.del(`OTP:USR:${mobileNum}`);
+        await redisRead.del(`USR:OTP:${mobileNum}`);
       }
       await redisRead.quit();
       return otpVerified;

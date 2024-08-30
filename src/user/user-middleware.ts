@@ -488,8 +488,8 @@ class UserMiddleware {
     try {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
-      // "WISHLIST:USR:<USER_ID>"= [pid1, pid2, pid3, ...]
-      const productIds = await redisRead.sMembers(`WISHLIST:USR:${userId}`);
+      // "USR:WISHLIST:<USER_ID>"= [pid1, pid2, pid3, ...]
+      const productIds = await redisRead.sMembers(`USR:WISHLIST:${userId}`);
       // Prepare wishlist data from "PRODUCT:<PID>"
       const userWishlist = await Promise.all(
         productIds.map(async pid => {
@@ -520,9 +520,9 @@ class UserMiddleware {
       const redisWrite = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisWrite.connect();
       if (!set) {
-        result = await redisWrite.sRem(`WISHLIST:USR:${userId}`, [productId]);
+        result = await redisWrite.sRem(`USR:WISHLIST:${userId}`, [productId]);
       } else {
-        result = await redisWrite.sAdd(`WISHLIST:USR:${userId}`, productId);
+        result = await redisWrite.sAdd(`USR:WISHLIST:${userId}`, productId);
       }
       await redisWrite.quit();
       return result;

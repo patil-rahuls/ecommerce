@@ -17,10 +17,11 @@ class ProductController implements Controller {
 
   private initializeRoutes() {
     // Get Product Page
-    this.router.get(`/:ptitle/pid/:pid`, CSRF.protect(), this.product.getProduct);
+    this.router.get(`/:ptitle/pid/:pid`, CSRF.protect(), (req, res, next) => this.product.getProduct(req, res, next));
 
     // WIP Set Dummy Product - Only for development
-    // this.router.post(`/:pid`, CSRF.protect(), this.product.setProduct);
+    this.router.get(`/:pid`, CSRF.protect(), (req, res, next) => this.product.setProduct(req, res, next));
+    this.router.get(`/allpids`, CSRF.protect(), (req, res, next) => this.product.getAllProducts(req, res, next));
   }
 }
 

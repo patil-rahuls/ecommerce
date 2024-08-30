@@ -32,17 +32,16 @@
   </head>
   <body>
     <% if(data) { %>
-      <%- include('partials/header.html', { data }) %>
+      <%- include('partials/header.html', data) %>
     <% } else { %>
       <%- include('partials/header.html') %>
     <% } %>
 
     <div id="layout">
-      <% if(layout) { %>
-        <%- include('layouts/'+ layout + '.html') %>
-      <% } else { %>
-        <%- include('layouts/home.html') %>
-      <% } %> 
+      <% if(!layout) { 
+        layout = 'home';
+      } %>
+      <%- include('layouts/'+ layout + '.html') %>
     </div>
 
     <%- include('partials/footer.html') %>

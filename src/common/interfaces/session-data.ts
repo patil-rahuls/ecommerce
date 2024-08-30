@@ -8,6 +8,6 @@ declare module 'express-session' {
     ct: string; // CSRF Token
     preSessionId?: string;
     lastOtpAt: any;
-    previousUrl: string; // Url to redirect at, after login.
+    redirectUrl?: string;
   }
 }

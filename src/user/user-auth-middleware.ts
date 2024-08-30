@@ -9,7 +9,7 @@ import { SMSAuth } from '../common/sms-auth.js';
 import { User } from '../common/interfaces/user.js';
 
 class AuthMiddleware {
-  static readonly ACCESS_TOKEN_EXPIRY = 5 * 60 * 1000;
+  static readonly ACCESS_TOKEN_EXPIRY = 1 * 60 * 1000;
   static readonly REFRESH_TOKEN_EXPIRY = 10 * 24 * 60 * 60 * 1000;
 
   // Access Login Form
@@ -109,9 +109,15 @@ class AuthMiddleware {
           // Existing user authenticated using password
           DB.releaseConnection(res);
           await this.setUsrSession(user[0], req, res);
+          let redirectUrl;
+          if (req.session.redirectUrl) {
+            redirectUrl = req.session.redirectUrl;
+            req.session.redirectUrl = null;
+          }
           res.json({
             status: 200,
-            userMessage: `Logged in! Welcome!!`
+            userMessage: `Logged in! Welcome!!`,
+            ...(redirectUrl && { redirectUrl })
           });
           break;
         case passkey !== user?.[0]?.password:
@@ -193,13 +199,13 @@ class AuthMiddleware {
           throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
         }
       }
-      if (!rt) {
+      if (AuthMiddleware.isValidJwtToken(rt)) {
         throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
       if (!req?.session?.user?.isAuthenticated) {
         throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
-      if (!at) {
+      if (AuthMiddleware.isValidJwtToken(at)) {
         // Renew Access Token
         // First Verify the Refresh Token
         if (AuthMiddleware.decodeToken(rt) === `REFRESH_ACCESS_ID-${req.session.user.mobile}`) {
@@ -228,6 +234,17 @@ class AuthMiddleware {
     }
   }
 
+  private static isValidJwtToken(token) {
+    if (!token || token === 'undefined' || typeof token !== 'string') {
+      return false;
+    }
+    const header = token?.split('.')?.[0];
+    if (JSON.parse(atob(header))?.typ?.toLowerCase() === 'jwt') {
+      return true;
+    }
+    return false;
+  }
+
   // Logout
   static logout(req: Request, res: Response, next: NextFunction) {
     try {
@@ -239,7 +256,12 @@ class AuthMiddleware {
       // an attempt to delete the session and other cookies from client's browser by expiring them.
       const cookiesArr = ['satr_id', 'ct', 'at', 'rt'];
       cookiesArr.forEach(c => CookieHelper.deleteCookies(res, c));
-      res.redirect('/');
+      if (!req.originalUrl?.includes('logout')) {
+        // Logic to redirect to home page and ask user to login.
+        res.redirect(`/?login=true&redirectTo=${req.originalUrl}`);
+      } else {
+        res.redirect(`/`);
+      }
     } catch (error) {
       next(new BaseError(`ERR_USER_LOGOUT`, error.message));
     }

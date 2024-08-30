@@ -6,8 +6,12 @@ import path from 'path';
 import ejsViewEngine from 'ejs';
 import './config/dotenv.js';
 import { Controller } from './common/interfaces/controller.js';
-import { LOGGER } from './common/logger.js';
+import { LOGGER } from './middlewares/logger.js';
 import { BaseError } from './middlewares/error-middleware.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+// Initialize an asyncLocalStorage to store request and response objects that can be accessed globally.
+const asyncLocalStorage: any = new AsyncLocalStorage();
 
 class App {
   public app: express.Application;
@@ -15,9 +19,28 @@ class App {
 
   constructor(controllers: Controller[]) {
     this.app = express();
+    this.initializeLogger();
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
     this.initializeErrorHandling();
+  }
+
+  // Logger
+  private initializeLogger() {
+    this.app.use((req, res, next) => LOGGER.LOG_REQUEST_RESPONSE(req, res, next));
+
+    // Set req and res objects in a global context using AsyncLocalStorage.
+    // AsyncLocalStorage works like a 'thread local object'.
+    // In our case we get a globally accessible {request, response} context. However, as of Aug. 2024, this is experimental.
+    // We will use it for LOGGER to log req info along with log message.
+    this.app.use(function (req, res, next) {
+      const context = asyncLocalStorage.getStore() || {};
+      context['REQ'] = req;
+      context['RES'] = res;
+      asyncLocalStorage.enterWith(context);
+      next();
+    });
+    LOGGER.INFO(`Initialized Logger`);
   }
 
   // Middlewares
@@ -75,13 +98,7 @@ class App {
     this.app.set('views', path.join(import.meta.dirname, 'views'));
     this.app.engine('html', ejsViewEngine.__express);
     this.app.set('view engine', 'html');
-    LOGGER.info(`Initialized middlewares.`);
-  }
-
-  // Error Middleware - (Last Middleware is treated as error handler)
-  private initializeErrorHandling() {
-    this.app.use(BaseError.ErrorHandler);
-    LOGGER.info(`Initialized Error-Handling Middleware.`);
+    LOGGER.INFO(`Initialized Middlewares.`);
   }
 
   // Routes
@@ -92,20 +109,26 @@ class App {
     this.app.use(function (req, res) {
       res.redirect('/404');
     });
-    LOGGER.info(`Initialized controllers.`);
+    LOGGER.INFO(`Initialized controllers.`);
+  }
+
+  // Error Middleware - (Last Middleware is treated as error handler)
+  private initializeErrorHandling() {
+    this.app.use(BaseError.ErrorHandler);
+    LOGGER.INFO(`Initialized Error-Handler.`);
   }
 
   public start() {
     this.app.set('json spaces', 2);
     this.app
       .listen(this.PORT, () => {
-        LOGGER.info(`Server instance started! PORT - ${this.PORT}`);
+        LOGGER.INFO(`Server instance started! PORT - ${this.PORT}`);
       })
       .on('error', err => {
         if (err.message.includes('listen EADDRINUSE: address already in use')) {
-          console.error(`PORT-${this.PORT} already in use. Please re-configure the server and restart the App.`);
+          LOGGER.ERROR(`PORT-${this.PORT} already in use. Please re-configure the server and restart the App.`);
         }
       });
   }
 }
-export { App };
+export { App, asyncLocalStorage };

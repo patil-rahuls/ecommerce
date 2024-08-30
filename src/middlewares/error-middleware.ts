@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ERROR_CODES, GENERIC_ERR_STR } from '../common/error-codes.js';
-import { LOGGER } from '../common/logger.js';
+import { LOGGER } from '../middlewares/logger.js';
 import { DB } from './db.js';
 
 class BaseError extends Error {
@@ -50,7 +50,7 @@ class BaseError extends Error {
       }
     }
 
-    LOGGER.error(JSON.stringify(errObj, null, 2));
+    LOGGER.ERROR(JSON.stringify(errObj, null, 2));
     if (process.env.NODE_ENV === 'production') {
       delete errObj.stack;
       delete errObj.message;

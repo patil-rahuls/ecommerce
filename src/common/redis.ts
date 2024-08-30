@@ -1,6 +1,6 @@
 import { RedisClientType, createClient } from 'redis';
 import { BaseError } from '../middlewares/error-middleware.js';
-import { LOGGER } from './logger.js';
+import { LOGGER } from '../middlewares/logger.js';
 
 class Redis {
   private static instance: Redis;
@@ -16,7 +16,7 @@ class Redis {
         reconnectStrategy: function (retries) {
           if (retries > 3) {
             const msg = 'REDIS- Too many attempts to reconnect. Connection terminated!';
-            LOGGER.error(msg);
+            LOGGER.ERROR(msg);
             return new BaseError('ERR_REDIS_CONN_ATTEMPTS_EXCEEDED', msg);
           } else {
             return retries * 500;
@@ -27,20 +27,20 @@ class Redis {
 
     Redis.client.on('error', err => {
       Redis.client.quit();
-      LOGGER.info('REDIS-Connection error.');
+      LOGGER.ERROR('REDIS-Connection error.');
       throw new BaseError('ERR_REDIS_CONNECTION', err.message);
     });
     Redis.client.on('ready', () => {
-      LOGGER.info('REDIS-Ready.');
+      LOGGER.INFO('REDIS-Ready.');
     });
     Redis.client.on('connect', () => {
-      LOGGER.info('REDIS-Connected!');
+      LOGGER.INFO('REDIS-Connected!');
     });
     Redis.client.on('reconnecting', () => {
-      LOGGER.info('REDIS-Connecting...');
+      LOGGER.INFO('REDIS-Connecting...');
     });
     Redis.client.on('end', () => {
-      LOGGER.info('REDIS-Disconnected!');
+      LOGGER.INFO('REDIS-Disconnected!');
     });
     return Redis.client;
   }

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseError } from '../middlewares/error-middleware.js';
 import { REDIS_INSTANCE } from '../common/redis.js';
+import { LOGGER } from '../middlewares/logger.js';
 
 class ProductMiddleware {
   // Get a product's all attributes' values.
@@ -48,9 +49,11 @@ class ProductMiddleware {
       // Warning: KEYS should only be used in production environments with extreme care.
       // It may ruin performance when it is executed against large databases.(like products data).
       const productKeys = await redisRead.keys(`PRODUCT:*`);
+      LOGGER.WARN(JSON.stringify(productKeys));
       const allProductDetails = productKeys.map(async k => {
         return this.getProductFromRedis(k);
       });
+      LOGGER.WARN(JSON.stringify(allProductDetails));
       await redisRead.quit();
       res.render('index', {
         layout: 'product',
@@ -89,10 +92,10 @@ class ProductMiddleware {
           data: result
         });
         // } else {
-        res.render('index', {
-          layout: 'product',
-          data: result
-        });
+        // res.render('index', {
+        //   layout: 'product',
+        //   data: result
+        // });
         // }
       } else {
         res.redirect('/');

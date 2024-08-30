@@ -24,7 +24,16 @@ class HomeController implements Controller {
   }
 
   private async homePage(req: Request, res: Response) {
-    const data = req.session?.user?.isAuthenticated ? req.session?.user : null;
+    let data: any = req.session?.user?.isAuthenticated ? req.session?.user : null;
+    // Logic to ask user to login and save previous url in session.
+    // Check if query '/?login=true&redirectTo=' is set.
+    if (Object.keys(req.query).length === 2 && req.query.login && req.query.redirectTo) {
+      if (data === null) {
+        data = {};
+      }
+      data['loginRequested'] = true;
+      req.session.redirectUrl = `${req.query.redirectTo}`;
+    }
     res.render('index', {
       layout: 'home',
       data

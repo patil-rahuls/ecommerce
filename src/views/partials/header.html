@@ -22,7 +22,9 @@
 
     <div class="nav-end">
       <div class="right-container">
-        <% if(data) { %>
+        <% if(data === null) { %>
+        <button class="btn btn-primary" id="login"><b>Login</b></button>
+        <% } else if (data) { if(!data.hasOwnProperty('loginRequested')){ %>
         <button class="btn btn-primary dropdown-btn" id="account" data-dropdown="account-dropdown" aria-haspopup="true" aria-expanded="false" aria-label="discover">
           <i class="fa-solid fa-user acc-icon" aria-hidden="true"></i>
           <b class="acc-btn-title">My Account</b>
@@ -44,9 +46,11 @@
             </li>
           </ul>
         </div>
+        <% } else if(Object.keys(data).length === 1 && data.loginRequested) { %>
+        <button class="btn btn-primary" data-testid="loginRequested" id="login"><b>Login</b></button>
         <% } else { %>
         <button class="btn btn-primary" id="login"><b>Login</b></button>
-        <% } %>
+        <% } %> <% } %>
         <a href="/user/cart" id="cart">
           <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
           <span id="cartItemCount"> 5 </span>

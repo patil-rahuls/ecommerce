@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { LOGGER } from '../middlewares/logger.js';
 
 abstract class CookieHelper {
   public static readonly getCookie = (req: Request, cookieType) => {
@@ -14,6 +15,7 @@ abstract class CookieHelper {
       expires: new Date('Thu, 01 Jan 1970 00:00:00 UTC'),
       httpOnly: false
     });
+    LOGGER.INFO(`Deleted Cookies`);
   };
 }
 
