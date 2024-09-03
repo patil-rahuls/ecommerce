@@ -46,7 +46,7 @@ class AuthMiddleware {
       req.session.lastOtpAt = Date.now();
       res.json({
         status: 200,
-        userMessage: `We've just sent an OTP to your mobile number. Please enter it!`
+        userMessage: `OTP Sent !`
       });
     } catch (error) {
       if (error instanceof BaseError) {
@@ -116,7 +116,7 @@ class AuthMiddleware {
           }
           res.json({
             status: 200,
-            userMessage: `Logged in! Welcome!!`,
+            userMessage: `Logged in !!`,
             ...(redirectUrl && { redirectUrl })
           });
           break;
@@ -199,13 +199,13 @@ class AuthMiddleware {
           throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
         }
       }
-      if (AuthMiddleware.isValidJwtToken(rt)) {
+      if (!AuthMiddleware.isValidJwtToken(rt)) {
         throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
       if (!req?.session?.user?.isAuthenticated) {
         throw new BaseError('ERR_USER_NOT_AUTHENTICATED');
       }
-      if (AuthMiddleware.isValidJwtToken(at)) {
+      if (!AuthMiddleware.isValidJwtToken(at)) {
         // Renew Access Token
         // First Verify the Refresh Token
         if (AuthMiddleware.decodeToken(rt) === `REFRESH_ACCESS_ID-${req.session.user.mobile}`) {

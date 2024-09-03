@@ -65,10 +65,6 @@
         <td></td>
         <td><input id="update-profile" type="button" class="btn-primary-solid" value="UPDATE" /></td>
       </tr>
-      <tr id="profileUpdateErr" class="hide err">
-        <td><label></label></td>
-        <td><span></span></td>
-      </tr>
     </table>
   </div>
 </main>
@@ -102,7 +98,6 @@
       </div>
       <span id="addrTypeErr" class="err hide">Please choose Address-Type</span>
       <input name="saveAddr" type="button" class="btn-primary-solid" value="Save" />
-      <span id="addrUpdateErr" class="err hide">Something went wrong!</span>
       <input name="cancelAddr" type="button" class="btn-primary" value="Cancel" />
       </div>
     </div>
@@ -125,7 +120,7 @@
               <% } %>
               <br />
               <span class="address-name"><b><%= addr.name %></b></span>
-              <span class="address-text"><%= addr.addressText %></span>
+              <span class="address-text"><%= addr.addressText.split('<ADDR_LINE_SEPARATOR>')[0] %><br><%= addr.addressText.split('<ADDR_LINE_SEPARATOR>')[1] %></span>
               <span class="address-pincode"><%= addr.pincode %></span>
               <span class="address-id hide"><%= addr.id %></span>
               <br />
@@ -134,8 +129,11 @@
             <br />
             <a class="editAddr">Edit</a>
             <% if(!isDefault) { %>
-              <a class="delAddr">Remove</a>
               <a class="defAddr">Set as Default</a>
+              <a class="delAddr">Remove</a>
+            <% } else { %>
+              <a class="defAddr hide">Set as Default</a>
+              <a class="delAddr hide">Remove</a>
             <% } %>
           </td>
           <% }); 

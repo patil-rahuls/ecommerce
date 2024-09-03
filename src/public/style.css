@@ -107,6 +107,51 @@ body {
 #loading input {
   width: 120px;
 }
+.toast {
+  position: fixed;
+  bottom: 50px;
+  left: 50%;
+  padding: 15px;
+  z-index: 99999;
+  background-color: var(--dark);
+  color: var(--light);
+  transform: translate(-50%, 0);
+  animation: fadein 0.5s;
+  width: max-content;
+  border-radius: 6px;
+  box-shadow:
+    rgba(0, 0, 0, 1) 1px 6px 24px 1px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  &.error {
+    color: palevioletred !important;
+  }
+  &.success {
+    color: lightgreen !important;
+  }
+}
+@keyframes fadein {
+  from {
+    bottom: 0;
+    opacity: 0;
+  }
+  to {
+    bottom: 50px;
+    opacity: 1;
+  }
+}
+@keyframes glow {
+  0% {
+    box-shadow: 0px 0px 10px 4px var(--primary-color);
+  }
+  100% {
+    box-shadow: 0px 0px 0px 0px var(--primary-color);
+  }
+}
+.glow {
+  animation-name: glow;
+  animation-duration: 2s;
+}
+
 ul {
   list-style: none;
 }
@@ -164,6 +209,7 @@ select {
 }
 .btn-primary {
   color: var(--primary-color) !important;
+  border: 1px solid var(--light) !important;
 }
 .btn-checkout {
   background-color: crimson !important;
@@ -569,6 +615,7 @@ main * {
   display: inline-block;
   padding-bottom: 10px;
   border-radius: 6px;
+  scroll-margin-top: 130px;
 }
 .profileForm .address.default {
   box-shadow: var(--shadow);

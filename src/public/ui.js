@@ -2,11 +2,13 @@
 // ## Common ##
 const GENERIC_ERR = `Oops... That's us!`;
 const getCookie = cookieType => {
-  const regxPattern = new RegExp(String.raw`${cookieType}=`);
-  return document.cookie
-    ?.split('; ')
-    ?.filter(c => regxPattern.test(c))?.[0]
-    ?.split('=')?.[1];
+  if (cookieType.trim()) {
+    const regxPattern = new RegExp(String.raw`${cookieType}=`);
+    return document.cookie
+      ?.split('; ')
+      ?.filter(c => regxPattern.test(c))?.[0]
+      ?.split('=')?.[1];
+  }
 };
 const fetchData = async (url, method = 'GET', data = '', headers = '') => {
   try {
@@ -35,9 +37,26 @@ const fetchData = async (url, method = 'GET', data = '', headers = '') => {
   }
 };
 const refreshPage = (delay = 1000) => {
-  setTimeout(() => {
+  if (delay) {
+    setTimeout(() => {
+      window.location.reload();
+    }, delay);
+  } else {
     window.location.reload();
-  }, delay);
+  }
+};
+const toast = (str, extraClass = '', timeout = 3000) => {
+  if (str) {
+    const toastDiv = document.createElement('div');
+    toastDiv.className = 'toast ' + extraClass;
+    toastDiv.innerHTML = str;
+    if (timeout) {
+      setTimeout(function () {
+        toastDiv.remove();
+      }, timeout);
+    }
+    document.body.appendChild(toastDiv);
+  }
 };
 
 // ## Input Validation ##
@@ -70,7 +89,7 @@ const validatePincode = pc => {
 };
 
 const formatAmount = amount => {
-  return amount.toLocaleString('en-IN', {
+  return amount?.toLocaleString('en-IN', {
     maximumFractionDigits: 2,
     style: 'currency',
     currency: 'INR'
@@ -87,10 +106,10 @@ const getAmountFromString = strAmount => {
 };
 
 const hideElement = sel => {
-  !sel.classList.contains('hide') && sel.classList.add('hide');
+  !sel?.classList.contains('hide') && sel.classList.add('hide');
 };
 const showElement = (sel, displayProp = '') => {
-  sel.classList.contains('hide') && sel.classList.remove('hide');
+  sel?.classList.contains('hide') && sel.classList.remove('hide');
   if (displayProp) {
     sel.style.display = displayProp;
   }
@@ -98,31 +117,31 @@ const showElement = (sel, displayProp = '') => {
 const setBtnState = (btnSel, inrTxt, displayProp = '') => {
   btnSel.value = inrTxt || 'CONTINUE';
   if (!displayProp) {
-    btnSel.classList.contains('loading') && btnSel.classList.remove('loading');
+    btnSel?.classList.contains('loading') && btnSel.classList.remove('loading');
     btnSel.style.backgroundColor = 'var(--primary-color)';
     return;
   }
-  btnSel.classList.add(displayProp);
+  btnSel?.classList.add(displayProp);
 };
 
 // ################################################################################################################################
 // ## Navbar/Hamburger ##
 const toggleHamburger = () => {
-  document.querySelector('#meta').classList.toggle('show-flex');
-  document.querySelector('.menu').classList.toggle('show');
+  document.querySelector('#meta')?.classList.toggle('show-flex');
+  document.querySelector('.menu')?.classList.toggle('show');
 };
-document.getElementById('hamburger').addEventListener('click', toggleHamburger);
+document.getElementById('hamburger')?.addEventListener('click', toggleHamburger);
 
 // ################################################################################################################################
 // ## Dropdown Menus ##
 const dropdownBtn = document.querySelectorAll('.dropdown-btn');
 const dropdown = document.querySelectorAll('.dropdown');
 const setAriaExpandedFalse = () => {
-  dropdownBtn.forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+  dropdownBtn?.forEach(btn => btn?.setAttribute('aria-expanded', 'false'));
 };
 const closeDropdownMenu = () => {
-  dropdown.forEach(drop => {
-    drop.classList.remove('active');
+  dropdown?.forEach(drop => {
+    drop?.classList.remove('active');
     drop?.addEventListener('click', e => e.stopPropagation());
   });
 };
@@ -132,7 +151,7 @@ document.documentElement.addEventListener('click', () => {
   setAriaExpandedFalse();
 });
 // hide/close drpdwn-menu when dropdown lnks are clicked.
-document.querySelectorAll('.dropdown a').forEach(link =>
+document.querySelectorAll('.dropdown a')?.forEach(link =>
   link?.addEventListener('click', () => {
     closeDropdownMenu();
     setAriaExpandedFalse();
@@ -143,14 +162,14 @@ dropdownBtn.forEach(btn => {
   btn?.addEventListener('click', e => {
     const dropdownIndex = e.currentTarget.dataset.dropdown;
     const dropdownElement = document.getElementById(dropdownIndex);
-    dropdownElement.classList.toggle('active');
-    dropdown.forEach(drop => {
-      if (drop.id !== btn.dataset['dropdown']) {
-        drop.classList.remove('active');
+    dropdownElement?.classList.toggle('active');
+    dropdown?.forEach(drop => {
+      if (drop?.id !== btn?.dataset['dropdown']) {
+        drop?.classList.remove('active');
       }
     });
     e.stopPropagation();
-    btn.setAttribute('aria-expanded', btn.getAttribute('aria-expanded') === 'false' ? 'true' : 'false');
+    btn?.setAttribute('aria-expanded', btn?.getAttribute('aria-expanded') === 'false' ? 'true' : 'false');
   });
 });
 // hide/close drpdwn on escape key press
@@ -172,13 +191,13 @@ const showLoading = () => {
   showElement(loading);
   showElement(blurOverlay);
 };
-document.querySelectorAll('a').forEach(a => a.addEventListener('click', showLoading));
+document.querySelectorAll('a[href*="/"]')?.forEach(a => a?.addEventListener('click', showLoading));
 const closePopup = popupSel => {
   hideElement(popupSel);
   hideElement(loading);
   hideElement(blurOverlay);
 };
-const toggleLoading = (show = '') => {
+const toggleLoading = (show = false) => {
   if (show) {
     showElement(loading);
     showElement(blurOverlay);
@@ -191,21 +210,23 @@ const logoutBtn = document.querySelector(`a[href*="/user/logout"]`);
 logoutBtn?.addEventListener('click', () => toggleLoading(true));
 
 // ## Popup/Modals - LoginForm - Show/Close ##
+const mainLoginBtn = document.querySelector(`#login`);
 const loginForm = document.querySelector(`#loginForm`);
 const closeLoginFormSel = document.querySelector(`.close-loginForm`);
 const closeLoginForm = () => {
   closePopup(loginForm);
+  toggleLoading(true);
   // Remove query parameters.
   window.history.replaceState(null, document.title, window.location.href.split('?')[0]);
   refreshPage(0); // This may affect UX.
 };
 closeLoginFormSel?.addEventListener('click', closeLoginForm);
 retryBtn?.addEventListener('click', () => {
-  loading.querySelector('b').innerText = `We won't let you wait. Promise :)`;
+  loading.querySelector('b').innerText = `Please wait. This won't take long.`;
   hideElement(retryBtn);
   refreshPage(0);
 });
-document.querySelector(`#login`)?.addEventListener('click', async () => {
+mainLoginBtn?.addEventListener('click', async () => {
   toggleLoading(true);
   try {
     const resp = await fetchData('/user/login');
@@ -243,13 +264,13 @@ let isUsingPW, loginIdOk;
 isUsingPWSel?.addEventListener('click', () => {
   if (isUsingPW) {
     isUsingPWSel.innerHTML = '<b>Login using Password?</b>';
-    password.setAttribute('placeholder', 'OTP');
+    password?.setAttribute('placeholder', 'OTP');
     password.value = '';
     isUsingPW = false;
     unSetError(passwordErr);
   } else {
     isUsingPWSel.innerHTML = '<b>Login using OTP?</b>';
-    password.setAttribute('placeholder', 'Password');
+    password?.setAttribute('placeholder', 'Password');
     password.value = '';
     isUsingPW = true;
     unSetError(passwordErr);
@@ -279,43 +300,44 @@ const login = async () => {
         break;
       case 200:
         hideElement(isUsingPWSel);
-        closeLoginFormSel.removeEventListener('click', closeLoginForm);
-        closeLoginFormSel.remove();
+        closeLoginFormSel?.removeEventListener('click', closeLoginForm);
+        closeLoginFormSel?.remove();
+        toast(resp.userMessage, 'success', false);
         setBtnState(continueBtn, 'Just a sec...', 'success');
         // Redirect to index, if logging in from 404 page.
         if (window.location.href.includes('/404')) {
           let returnUrl = window.location.href.split('/');
-          returnUrl.pop();
+          returnUrl?.pop();
           window.location.href = returnUrl.join('/');
-        } else {
+        } else if (resp.redirectUrl) {
           // Check if any redirect link is set in the respose.
-          if (resp.redirectUrl) {
-            window.location.href = resp.redirectUrl;
-          } else {
-            refreshPage();
-          }
+          window.location.href = resp.redirectUrl;
+        } else {
+          refreshPage(0);
         }
         break;
       default:
         continueBtn.disabled = false;
         setBtnState(continueBtn, 'LOGIN');
-        loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');
+        // loginErr(passwordErr, password, resp.userMessage || 'Oops. something went wrong!');
+        toast(resp.userMessage, 'error');
         break;
     }
   } catch (err) {
     continueBtn.disabled = false;
     setBtnState(continueBtn, 'LOGIN');
-    loginErr(passwordErr, password, 'Oops. something went wrong!');
+    // loginErr(passwordErr, password, 'Oops. something went wrong!');
+    toast('Oops. something went wrong!', 'error');
   }
 };
 continueBtn?.addEventListener('click', async () => {
   if (loginId.value?.length !== 10 || isNaN(loginId.value) || !new RegExp(/^[6-9]\d{9}$/).test(loginId.value)) {
     setError(loginIdErr, 'Please enter a valid mobile-number!');
     return;
-  } else if (loginIdOk && !passwordDiv.classList.contains('hide')) {
+  } else if (loginIdOk && !passwordDiv?.classList.contains('hide')) {
     switch (true) {
       case isUsingPW:
-        if (password.value?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(password.value)) {
+        if (password?.value?.length > 5 && /^[A-Za-z0-9_!@#$^./&+-]*$/.test(password.value)) {
           await login();
         } else {
           setError(passwordErr, 'Password is incorrect!');
@@ -323,7 +345,7 @@ continueBtn?.addEventListener('click', async () => {
         }
         break;
       case !isUsingPW:
-        if (password.value.length === 4 && !isNaN(password.value)) {
+        if (password?.value.length === 4 && !isNaN(password.value)) {
           await login();
         } else {
           setError(passwordErr, 'OTP is incorrect!');
@@ -354,6 +376,7 @@ continueBtn?.addEventListener('click', async () => {
         case 200:
           showElement(passwordDiv);
           showElement(isUsingPWSel);
+          toast(resp.userMessage, 'success');
           break;
         default:
           loginErr(loginIdErr, loginId, resp.userMessage || '');
@@ -383,7 +406,6 @@ const emailErr = document.querySelector(`#emailErr`);
 const genderErr = document.querySelector(`#genderErr`);
 const profilePasswordErr = document.querySelector(`#profilePasswordErr`);
 const profileRePasswordErr = document.querySelector(`#profileRePasswordErr`);
-const profileUpdateErr = document.querySelector(`#profileUpdateErr`);
 const updateProfileBtn = document.querySelector('#update-profile');
 changePwLink?.addEventListener('click', function () {
   hideElement(changePwLink);
@@ -392,7 +414,7 @@ changePwLink?.addEventListener('click', function () {
 });
 const itemsToBeUpdated = {};
 const resetProfileUpdateErrors = () => {
-  [nameErr, emailErr, genderErr, profilePasswordErr, profileRePasswordErr, profileUpdateErr].forEach(sel => {
+  [nameErr, emailErr, genderErr, profilePasswordErr, profileRePasswordErr].forEach(sel => {
     sel.querySelector('span').innerText = '';
     hideElement(sel);
     err = false;
@@ -403,7 +425,7 @@ const showProfileUpdateErrors = (errSel, msg) => {
   errSel.querySelector('span').innerText = msg;
 };
 const disableProfileForm = disabledState => {
-  [changePwLink, profilePassword, profileRePassword, profileName, profileEmail, profileGender, updateProfileBtn].forEach(el => (el.disabled = disabledState));
+  [changePwLink, profilePassword, profileRePassword, profileName, profileEmail, profileGender, updateProfileBtn].forEach(el => el?.disabled == disabledState);
   if (disabledState) {
     showElement(loading);
     showElement(blurOverlay);
@@ -413,7 +435,6 @@ const disableProfileForm = disabledState => {
   hideElement(blurOverlay);
 };
 const updateProfile = async () => {
-  let ok;
   disableProfileForm(true);
   try {
     if (Object.keys(itemsToBeUpdated).length) {
@@ -421,36 +442,29 @@ const updateProfile = async () => {
       itemsToBeUpdated.ct = ct;
       const resp = await fetchData('/user/profile', 'POST', itemsToBeUpdated);
       Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
-      if (resp.validationErrors) {
+      if (resp?.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
           showProfileUpdateErrors(document.querySelector(`#${sel}`), errMsg);
         });
       }
-      switch (resp.status) {
+      switch (resp?.status) {
         case 200:
         case 304:
           if (!resp.validationErrors) {
-            // profileUpdateErr.classList.remove('err');
-            // profileUpdateErr.classList.add('success');
-            // showProfileUpdateErrors(profileUpdateErr, resp.userMessage);
-            // Show success popup & reload page.
-            loading.classList.add('success');
-            loading.innerText = resp.userMessage;
-            ok = true;
-            refreshPage();
+            toast(resp.userMessage, 'success');
           }
           break;
         default:
           if (!resp.validationErrors) {
-            showProfileUpdateErrors(profileUpdateErr, resp.userMessage || 'Something went wrong!');
+            toast(resp.userMessage, 'error');
           }
           break;
       }
     }
   } catch (err) {
-    showProfileUpdateErrors(profileUpdateErr, 'Something went wrong!');
+    toast('Something went wrong!', 'error');
   }
-  !ok && disableProfileForm(false);
+  disableProfileForm(false);
 };
 const validateProfileInfo = () => {
   let ok = true;
@@ -503,6 +517,7 @@ updateProfileBtn?.addEventListener('click', async () => {
 
 // ################################################################################################################################
 // ## User Address ##
+const allAddresses = document.getElementsByClassName('address');
 const addAddrBtn = document.querySelector(`#add-address`);
 const addrForm = document.querySelector(`.addressForm `);
 const addrLine1 = document.querySelector(`input[name="addrLine1"]`);
@@ -519,14 +534,13 @@ const addrMobileErr = document.querySelector('#addrMobileErr');
 const addrNameErr = document.querySelector('#addrNameErr');
 const addrLine1Err = document.querySelector('#addrLine1Err');
 const addrLine2Err = document.querySelector('#addrLine2Err');
-const addrUpdateErr = document.querySelector('#addrUpdateErr');
 const saveAddrBtn = document.querySelector(`input[name="saveAddr"]`);
 const cancelAddr = document.querySelector(`input[name="cancelAddr"]`);
-const editAddr = Array.from(document.querySelectorAll(`a.editAddr`));
-const delAddr = Array.from(document.querySelectorAll(`a.delAddr`));
-const defAddr = Array.from(document.querySelectorAll(`a.defAddr`));
+const editAddr = Array.from(document.getElementsByClassName(`editAddr`));
+const delAddr = Array.from(document.getElementsByClassName(`delAddr`));
+const defAddr = Array.from(document.getElementsByClassName(`defAddr`));
 const resetErrors = () => {
-  [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err, addrUpdateErr].forEach(sel => hideElement(sel));
+  [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err].forEach(sel => hideElement(sel));
 };
 addAddrBtn?.addEventListener('click', () => {
   showElement(addrForm, 'block');
@@ -535,11 +549,11 @@ addAddrBtn?.addEventListener('click', () => {
 const clearAddrForm = () => {
   ['Work', 'Home'].forEach(addrTypeValue => (document.querySelector(`input[name="addrType"][value="${addrTypeValue}"]`).checked = false));
   [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId].forEach(el => (el.value = ''));
+  hideElement(addrForm);
+  showElement(addAddrBtn);
 };
 cancelAddr?.addEventListener('click', () => {
   clearAddrForm();
-  hideElement(addrForm);
-  showElement(addAddrBtn);
 });
 const populateAddrForm = editAddrBtn => {
   const addrDiv = editAddrBtn.parentElement.querySelector('div');
@@ -548,25 +562,11 @@ const populateAddrForm = editAddrBtn => {
   addrPincode.value = addrDiv.querySelector('.address-pincode')?.innerText;
   addrMobile.value = addrDiv.querySelector('.address-mobile')?.innerText?.replace('Phone Number: ', '');
   addrName.value = addrDiv.querySelector('.address-name')?.innerText;
-  const fullAddrText = addrDiv.querySelector('.address-text')?.innerText;
-  // divide fullAddrText into two parts. addr line1 & line 2
-  const quotient = Math.floor(fullAddrText?.split(' ')?.length / 2);
-  addrLine1.value = fullAddrText?.split(' ')?.slice(0, quotient)?.join(' ');
-  addrLine2.value = fullAddrText?.split(' ')?.slice(quotient)?.join(' ');
+  const [line1, line2] = addrDiv.querySelector('.address-text')?.innerHTML?.split('<br>');
+  addrLine1.value = line1;
+  addrLine2.value = line2;
   addrId.value = addrDiv.querySelector('.address-id')?.innerText || '';
 };
-editAddr?.forEach(editAddrBtn => {
-  editAddrBtn.addEventListener('click', () => {
-    // Hide already shown(by clicking any anchor tags) loading overlay
-    hideElement(loading);
-    hideElement(blurOverlay);
-    hideElement(addAddrBtn);
-    // Populate addrForm with selected addr info
-    populateAddrForm(editAddrBtn);
-    showElement(addrForm, 'block');
-    document.querySelector('#layout main:nth-child(2)').scrollIntoView();
-  });
-});
 const validateAddr = () => {
   let ok = true;
   const addrType = document.querySelector(`input[name="addrType"]:checked`);
@@ -598,7 +598,7 @@ const validateAddr = () => {
 };
 const disableAddrForm = disabledState => {
   // addrType?.disabled = disabledState;
-  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId, saveAddrBtn, cancelAddr].forEach(el => (el.disabled = disabledState));
+  [addrPincode, addrMobile, addrName, addrLine1, addrLine2, addrId, saveAddrBtn, cancelAddr].forEach(el => el?.disabled == disabledState);
   if (disabledState) {
     showElement(loading);
     showElement(blurOverlay);
@@ -609,10 +609,120 @@ const disableAddrForm = disabledState => {
   hideElement(loading);
   hideElement(blurOverlay);
 };
+// Edit/Set-Default/Delete Address
+document.querySelector('body').addEventListener('click', async function (event) {
+  // Edit Address
+  if (event.target.classList.contains('editAddr')) {
+    // Hide already shown(by clicking any anchor tags) loading overlay
+    hideElement(loading);
+    hideElement(blurOverlay);
+    hideElement(addAddrBtn);
+    // Populate addrForm with selected addr info
+    populateAddrForm(event.target);
+    showElement(addrForm, 'block');
+    document.querySelector('#layout main:nth-child(2)')?.scrollIntoView();
+  }
+  // Set default address
+  if (event.target.classList.contains('defAddr')) {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const addressToBeSetDefault = event.target?.parentElement;
+      const id = addressToBeSetDefault?.querySelector('div .address-id')?.innerText;
+      if (!id || isNaN(id)) {
+        throw new Error();
+      }
+      const itemsToBeUpdated = { id, ct };
+      const resp = await fetchData('/user/address', 'PUT', itemsToBeUpdated);
+      switch (resp.status) {
+        case 200:
+          toast(resp.userMessage, 'success');
+          Array.from(allAddresses)?.forEach(td => {
+            // Remove default tag from all the addresses.
+            td?.querySelectorAll('div .address-type')?.forEach(t => {
+              if (t.innerText === 'Default') {
+                t.remove();
+              }
+            });
+            // Set 'delete' & 'set as default' btns
+            const reqdBtns = ['delAddr', 'defAddr', 'editAddr'].filter(
+              btnClass =>
+                !Array.from(td.querySelectorAll('a'))
+                  .map(a => a.className)
+                  .includes(btnClass)
+            );
+            reqdBtns.forEach(btnClass => {
+              let text = '';
+              switch (btnClass) {
+                case 'defAddr':
+                  text = 'Set as Default';
+                  break;
+                case 'delAddr':
+                  text = 'Remove';
+                  break;
+                case 'editAddr':
+                  text = 'Edit';
+                  break;
+              }
+              if (text) {
+                // td.querySelector(`a.${btnClass}`)?. insertAdjacentHTML("afterend", `<a class="${btnClass}">${text}</a>`);
+                showElement(td.querySelector(`a.${btnClass}`));
+              }
+            });
+          });
+          // Set default tag to the current address and hide/remove 'delete' & 'set as default' btns
+          if (!Array.from(addressToBeSetDefault.querySelectorAll('div .address-type'))?.some(t => t.innerText === 'Default')) {
+            addressToBeSetDefault.querySelector('div .address-type')?.insertAdjacentHTML('afterend', `<span class="address-type default">Default</span>`);
+            // Hiding the buttons because removing them removes their event listener.
+            hideElement(addressToBeSetDefault.querySelector('.delAddr'));
+            hideElement(addressToBeSetDefault.querySelector('.defAddr'));
+          }
+          break;
+        default:
+          toast(resp.userMessage, 'error');
+          break;
+      }
+    } catch (err) {
+      toast('Something went wrong!', 'error');
+    }
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+  // Delete Address
+  if (event.target.classList.contains('delAddr')) {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const addressToBeDeleted = event.target?.parentElement;
+      const id = addressToBeDeleted?.querySelector('div .address-id')?.innerText;
+      if (!id || isNaN(id)) {
+        throw new Error();
+      }
+      const itemsToBeUpdated = { id, ct };
+      const resp = await fetchData('/user/address', 'DELETE', itemsToBeUpdated);
+      switch (resp.status) {
+        case 200:
+          addressToBeDeleted.remove();
+          toast(resp.userMessage, 'success');
+          break;
+        default:
+          toast(resp.userMessage, 'error');
+          break;
+      }
+    } catch (err) {
+      toast('Something went wrong!', 'error');
+    }
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+});
+// Save/Update address
 saveAddrBtn?.addEventListener('click', async () => {
   resetErrors();
   if (validateAddr()) {
-    // get data to be  updated/inserted
+    // get data to be updated/inserted
     const addrType = document.querySelector(`input[name="addrType"]:checked`);
     let itemsToBeUpdated = {
       addrName: addrName.value,
@@ -625,12 +735,10 @@ saveAddrBtn?.addEventListener('click', async () => {
       ct: ''
     };
     disableAddrForm(true);
-    let ok;
     try {
       const ct = getCookie('ct');
       itemsToBeUpdated.ct = ct;
       const resp = await fetchData('/user/address', 'POST', itemsToBeUpdated);
-      Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
       if (resp.validationErrors) {
         Object.entries(resp.validationErrors).forEach(([sel, errMsg]) => {
           setError(document.querySelector(`#${sel}`), errMsg);
@@ -641,87 +749,57 @@ saveAddrBtn?.addEventListener('click', async () => {
         case 201:
         case 304:
           if (!resp.validationErrors) {
-            // addrUpdateErr.classList.remove('err');
-            // addrUpdateErr.classList.add('success');
-            // setError(addrUpdateErr, resp.userMessage);
-            // Show success popup & reload page.
-            loading.classList.add('success');
-            loading.innerText = resp.userMessage;
-            ok = true;
-            refreshPage();
+            // Create/Update the address element.
+            if (itemsToBeUpdated.id) {
+              // Update
+              const addrDivToUpdate = Array.from(document.querySelectorAll(`.address-id`))?.find(td => td.innerText === itemsToBeUpdated.id)?.parentElement;
+              addrDivToUpdate.querySelector('.address-type').innerText = itemsToBeUpdated.addrType;
+              addrDivToUpdate.querySelector('.address-name').innerText = itemsToBeUpdated.addrName;
+              addrDivToUpdate.querySelector('.address-pincode').innerText = itemsToBeUpdated.addrPincode;
+              addrDivToUpdate.querySelector('.address-id').innerText = itemsToBeUpdated.id;
+              addrDivToUpdate.querySelector('.address-mobile').innerText = itemsToBeUpdated.addrMobile;
+              addrDivToUpdate.querySelector('.address-text').innerHTML = itemsToBeUpdated.addrLine1 + '<br>' + itemsToBeUpdated.addrLine2;
+              addrDivToUpdate.parentElement?.classList.add('glow');
+              addrDivToUpdate.parentElement?.scrollIntoView();
+            } else {
+              // Add
+              const lastAddrTd = Array.from(allAddresses).slice(-1)[0];
+              const newAddressElem = `
+              <td class="address glow">
+                <div>
+                  <span class="address-type">${itemsToBeUpdated.addrType}</span>
+                  <br />
+                  <span class="address-name"><b>${itemsToBeUpdated.addrName}</b></span>
+                  <span class="address-text">${itemsToBeUpdated.addrLine1}<br>${itemsToBeUpdated.addrLine2}</span>
+                  <span class="address-pincode">${itemsToBeUpdated.addrPincode}</span>
+                  <span class="address-id hide">${resp.addrId}</span>
+                  <br />
+                  <span class="address-mobile">Phone Number: ${itemsToBeUpdated.addrMobile}</span>
+                </div>
+                <br />
+                <a class="editAddr">Edit</a>
+                <a class="defAddr">Set as Default</a>
+                <a class="delAddr">Remove</a>
+              </td>`;
+              lastAddrTd?.insertAdjacentHTML('afterend', newAddressElem);
+              lastAddrTd.scrollIntoView();
+            }
+            clearAddrForm();
+            toast(resp.userMessage, 'success');
           }
           break;
         default:
           if (!resp.validationErrors) {
-            setError(addrUpdateErr, resp.userMessage || 'Something went wrong!');
+            toast(resp.userMessage || 'Something went wrong!', 'error');
           }
           break;
       }
     } catch (err) {
-      setError(addrUpdateErr, 'Something went wrong!');
+      toast('Something went wrong!', 'error');
     }
-    !ok && disableAddrForm(false);
+    Object.keys(itemsToBeUpdated).forEach(key => delete itemsToBeUpdated[key]);
+    disableAddrForm(false);
   }
-});
-// set default address
-defAddr?.forEach(defAddrBtn => {
-  defAddrBtn.addEventListener('click', async () => {
-    showElement(loading);
-    showElement(blurOverlay);
-    try {
-      const ct = getCookie('ct');
-      const id = defAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
-      if (!id || isNaN(id)) {
-        throw new Error();
-      }
-      const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData('/user/address', 'PUT', itemsToBeUpdated);
-      switch (resp.status) {
-        case 200:
-          loading.classList.add('success');
-          loading.innerText = resp.userMessage;
-          break;
-        default:
-          loading.classList.add('err');
-          loading.innerText = resp.userMessage;
-          break;
-      }
-    } catch (err) {
-      loading.classList.add('err');
-      loading.innerText = 'Something went wrong!';
-    }
-    refreshPage();
-  });
-});
-// delete address
-delAddr?.forEach(delAddrBtn => {
-  delAddrBtn.addEventListener('click', async () => {
-    showElement(loading);
-    showElement(blurOverlay);
-    try {
-      const ct = getCookie('ct');
-      const id = delAddrBtn?.parentElement?.querySelector('div .address-id')?.innerText;
-      if (!id || isNaN(id)) {
-        throw new Error();
-      }
-      const itemsToBeUpdated = { id, ct };
-      const resp = await fetchData('/user/address', 'DELETE', itemsToBeUpdated);
-      switch (resp.status) {
-        case 200:
-          loading.classList.add('success');
-          loading.innerText = resp.userMessage;
-          break;
-        default:
-          loading.classList.add('err');
-          loading.innerText = resp.userMessage;
-          break;
-      }
-    } catch (err) {
-      loading.classList.add('err');
-      loading.innerText = 'Something went wrong!';
-    }
-    refreshPage();
-  });
 });
 
 // ################################################################################################################################
@@ -742,17 +820,20 @@ addToWishlistBtns?.forEach(addToWishlistBtn => {
       const resp = await fetchData('/user/wishlist', 'POST', payload);
       switch (resp.status) {
         case 200:
-          loading.classList.add('success');
-          loading.innerText = resp.userMessage;
+          // loading.classList.add('success');
+          // loading.innerText = resp.userMessage;
+          toast(resp.userMessage, 'success');
           break;
         default:
-          loading.classList.add('err');
-          loading.innerText = resp.userMessage;
+          // loading.classList.add('err');
+          // loading.innerText = resp.userMessage;
+          toast(resp.userMessage, 'error');
           break;
       }
     } catch (err) {
-      loading.classList.add('err');
-      loading.innerText = 'Something went wrong!';
+      // loading.classList.add('err');
+      // loading.innerText = 'Something went wrong!';
+      toast(resp.userMessage, 'error');
     }
     // refreshPage();
   });
@@ -863,7 +944,7 @@ Array.from(document.images)
 window.onload = function () {
   (() => {
     const loginBtn = document.querySelector(`#login`);
-    if (loginBtn.getAttribute('data-testid') === 'loginRequested') {
+    if (loginBtn?.getAttribute('data-testid') === 'loginRequested') {
       loginBtn.click();
       loginBtn.removeAttribute('data-testid');
     }

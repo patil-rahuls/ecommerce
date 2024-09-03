@@ -21,6 +21,14 @@ class UserMiddleware {
     } catch (error) {
       if (error instanceof BaseError) {
         next(error);
+        // Stop sending error response, instead send response back to requested route.
+        // const host = req.get('host');
+        //  we need to handle errors properly.. so many times if anything fails we get the error page.
+        // instead of that, we should get a toast or a 'something went wrong' page with a retry btn.
+        // res.render('index', {
+        //   layout: 'error-page',
+        //   data: req.session.user,
+        // });
       } else {
         next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
       }
@@ -150,7 +158,7 @@ class UserMiddleware {
       [addrLine1, addrLine2].forEach((addrTxt, i) => {
         if (addrTxt && InputValidator.validateAddress(addrTxt)) {
           // dataTobeUpdated[`addrLine${i}`] = addrTxt;
-          dataTobeUpdated.addressText += addrTxt + ' ';
+          dataTobeUpdated.addressText += addrTxt + ' <ADDR_LINE_SEPARATOR>';
         } else {
           validationErrors[`addrLine${i}Err`] = 'Invalid address text';
         }
@@ -161,7 +169,9 @@ class UserMiddleware {
           validationErrors
         });
       } else if (Object.keys(dataTobeUpdated).length === 5) {
-        dataTobeUpdated.addressText = dataTobeUpdated.addressText.trim();
+        const pos = dataTobeUpdated.addressText.lastIndexOf('<ADDR_LINE_SEPARATOR>');
+        dataTobeUpdated.addressText = dataTobeUpdated.addressText.slice(0, pos).trim();
+        // dataTobeUpdated.addressText string will contain a token <ADDR_LINE_SEPARATOR> and will be stored in db as is.
         const dbConn = await DB.createConnection(res);
         if (id) {
           // Update
@@ -189,10 +199,12 @@ class UserMiddleware {
           }
           // delete dataTobeUpdated['user_id'];
           // Update session
+          dataTobeUpdated['id'] = result.insertId;
           req.session.user.allAddresses.push(dataTobeUpdated);
           res.json({
             status: 201,
-            userMessage: `Address Saved!`
+            userMessage: `Address Saved!`,
+            addrId: result.insertId
           });
         }
       }
@@ -313,10 +325,13 @@ class UserMiddleware {
   // WIP
   public async cart(req: Request, res: Response, next: NextFunction) {
     try {
-      // DUMMY Only for UI dev...
+      // const dbConn = await DB.createConnection(res);
+      // const userCart = await this.getUserCart(dbConn, req.session.user.id);
+      // DB.releaseConnection(res);
+      // req.session.user.cart = userCart;
       res.render('index', {
         layout: 'user-cart',
-        data: null
+        data: req.session.user
       });
     } catch (error) {
       if (error instanceof BaseError) {
@@ -330,10 +345,13 @@ class UserMiddleware {
   // WIP
   public async orders(req: Request, res: Response, next: NextFunction) {
     try {
-      // DUMMY Only for UI dev...
+      // const dbConn = await DB.createConnection(res);
+      // const userOrders = await this.getUserOrders(dbConn, req.session.user.id);
+      // DB.releaseConnection(res);
+      // req.session.user.orders = userOrders;
       res.render('index', {
         layout: 'user-orders',
-        data: null
+        data: req.session.user
       });
     } catch (error) {
       if (error instanceof BaseError) {
