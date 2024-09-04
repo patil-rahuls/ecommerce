@@ -56,7 +56,12 @@ class BaseError extends Error {
       delete errObj.message;
       delete errObj.debug;
     }
-    res.status(errObj.status).json(errObj);
+    if (res.locals.noRedirect) {
+      res.locals.noRedirect = false;
+      res.redirect(req.header('Referer') || '/500');
+    } else {
+      res.status(errObj.status).json(errObj);
+    }
   };
 }
 

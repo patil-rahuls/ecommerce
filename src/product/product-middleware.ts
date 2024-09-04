@@ -78,7 +78,7 @@ class ProductMiddleware {
           id: req.params.pid,
           imgThumbnail: `/product.jpeg`,
           title: `Product Brand's Product Title WITH Product's salient features`,
-          rating: 3.8,
+          rating: 2,
           discountPercentage: `15`,
           mrp: `1299`,
           sellPrice: `1099`,
@@ -91,12 +91,6 @@ class ProductMiddleware {
           layout: 'product',
           data: result
         });
-        // } else {
-        // res.render('index', {
-        //   layout: 'product',
-        //   data: result
-        // });
-        // }
       } else {
         res.redirect('/');
       }

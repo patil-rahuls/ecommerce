@@ -19,16 +19,9 @@ class UserMiddleware {
         data: req.session.user
       });
     } catch (error) {
+      res.locals.noRedirect = true; // This will prevent the error page and instead redirect back to original page.
       if (error instanceof BaseError) {
         next(error);
-        // Stop sending error response, instead send response back to requested route.
-        // const host = req.get('host');
-        //  we need to handle errors properly.. so many times if anything fails we get the error page.
-        // instead of that, we should get a toast or a 'something went wrong' page with a retry btn.
-        // res.render('index', {
-        //   layout: 'error-page',
-        //   data: req.session.user,
-        // });
       } else {
         next(new BaseError(`ERR_USER_PROFILE_PAGE`, error.message));
       }
@@ -288,6 +281,7 @@ class UserMiddleware {
         data: req.session.user
       });
     } catch (error) {
+      res.locals.noRedirect = true;
       if (error instanceof BaseError) {
         next(error);
       } else {
@@ -334,6 +328,7 @@ class UserMiddleware {
         data: req.session.user
       });
     } catch (error) {
+      res.locals.noRedirect = true;
       if (error instanceof BaseError) {
         next(error);
       } else {
@@ -354,6 +349,7 @@ class UserMiddleware {
         data: req.session.user
       });
     } catch (error) {
+      res.locals.noRedirect = true;
       if (error instanceof BaseError) {
         next(error);
       } else {

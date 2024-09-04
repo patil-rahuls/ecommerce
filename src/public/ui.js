@@ -536,9 +536,9 @@ const addrLine1Err = document.querySelector('#addrLine1Err');
 const addrLine2Err = document.querySelector('#addrLine2Err');
 const saveAddrBtn = document.querySelector(`input[name="saveAddr"]`);
 const cancelAddr = document.querySelector(`input[name="cancelAddr"]`);
-const editAddr = Array.from(document.getElementsByClassName(`editAddr`));
-const delAddr = Array.from(document.getElementsByClassName(`delAddr`));
-const defAddr = Array.from(document.getElementsByClassName(`defAddr`));
+// const editAddr = Array.from(document.getElementsByClassName(`editAddr`));
+// const delAddr = Array.from(document.getElementsByClassName(`delAddr`));
+// const defAddr = Array.from(document.getElementsByClassName(`defAddr`));
 const resetErrors = () => {
   [addrTypeErr, addrPincodeErr, addrMobileErr, addrNameErr, addrLine1Err, addrLine2Err].forEach(sel => hideElement(sel));
 };
@@ -602,10 +602,8 @@ const disableAddrForm = disabledState => {
   if (disabledState) {
     showElement(loading);
     showElement(blurOverlay);
-    // setBtnState(saveAddrBtn, 'Saving...', 'loading');
     return;
   }
-  // setBtnState(saveAddrBtn, 'Save');
   hideElement(loading);
   hideElement(blurOverlay);
 };
@@ -623,7 +621,7 @@ document.querySelector('body').addEventListener('click', async function (event) 
     document.querySelector('#layout main:nth-child(2)')?.scrollIntoView();
   }
   // Set default address
-  if (event.target.classList.contains('defAddr')) {
+  else if (event.target.classList.contains('defAddr')) {
     showElement(loading);
     showElement(blurOverlay);
     try {
@@ -666,7 +664,6 @@ document.querySelector('body').addEventListener('click', async function (event) 
                   break;
               }
               if (text) {
-                // td.querySelector(`a.${btnClass}`)?. insertAdjacentHTML("afterend", `<a class="${btnClass}">${text}</a>`);
                 showElement(td.querySelector(`a.${btnClass}`));
               }
             });
@@ -690,7 +687,7 @@ document.querySelector('body').addEventListener('click', async function (event) 
     hideElement(blurOverlay);
   }
   // Delete Address
-  if (event.target.classList.contains('delAddr')) {
+  else if (event.target.classList.contains('delAddr')) {
     showElement(loading);
     showElement(blurOverlay);
     try {
@@ -804,15 +801,16 @@ saveAddrBtn?.addEventListener('click', async () => {
 
 // ################################################################################################################################
 // ## Wishlist ##
-const addToWishlistBtns = document.querySelectorAll(`.addToWishlist`);
-const removeFromWishlistBtns = document.querySelectorAll(`.removeItem`);
-addToWishlistBtns?.forEach(addToWishlistBtn => {
-  addToWishlistBtn.addEventListener('click', async function () {
+// const addToWishlistBtns = document.getElementsByClassName('addToWishlist');
+// const removeFromWishlistBtns = document.getElementsByClassName(`removeItem`);
+document.querySelector('body').addEventListener('click', async function (event) {
+  // Add to Wishlist
+  if (event.target.classList.contains('addToWishlist')) {
     showElement(loading);
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      const productId = addToWishlistBtn.parentElement.querySelector(`input[name="productId"]`).value;
+      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
       if (!productId || isNaN(productId)) {
         throw new Error();
       }
@@ -820,31 +818,25 @@ addToWishlistBtns?.forEach(addToWishlistBtn => {
       const resp = await fetchData('/user/wishlist', 'POST', payload);
       switch (resp.status) {
         case 200:
-          // loading.classList.add('success');
-          // loading.innerText = resp.userMessage;
           toast(resp.userMessage, 'success');
           break;
         default:
-          // loading.classList.add('err');
-          // loading.innerText = resp.userMessage;
           toast(resp.userMessage, 'error');
           break;
       }
     } catch (err) {
-      // loading.classList.add('err');
-      // loading.innerText = 'Something went wrong!';
-      toast(resp.userMessage, 'error');
+      toast('Something went wrong!', 'error');
     }
-    // refreshPage();
-  });
-});
-removeFromWishlistBtns?.forEach(removeFromWishlistBtn => {
-  removeFromWishlistBtn.addEventListener('click', async function () {
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+  // Remove from wishlist
+  else if (event.target.classList.contains('removeItem')) {
     showElement(loading);
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      const productId = removeFromWishlistBtn.parentElement.querySelector(`input[name="productId"]`).value;
+      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
       if (!productId || isNaN(productId)) {
         throw new Error();
       }
@@ -852,22 +844,28 @@ removeFromWishlistBtns?.forEach(removeFromWishlistBtn => {
       const resp = await fetchData('/user/wishlist', 'DELETE', payload);
       switch (resp.status) {
         case 200:
-          loading.classList.add('success');
-          loading.innerText = resp.userMessage;
+          toast(resp.userMessage, 'success');
+          // Remove element from view.
+          event.target.parentElement.parentElement.remove();
+          if (Array.from(document.querySelectorAll('.wishlist tr td')).length <= 0) {
+            const newCell = document.createElement('td');
+            newCell.innerHTML = `<td><p>Nothing here yet...<button class="continue-shopping btn btn-primary"><a href="/">Continue Shopping...</a></button></p></td>`;
+            document.querySelector(`.wishlist tr`).appendChild(newCell);
+          }
           break;
         default:
-          loading.classList.add('err');
-          loading.innerText = resp.userMessage;
+          toast(resp.userMessage, 'error');
           break;
       }
     } catch (err) {
-      loading.classList.add('err');
-      loading.innerText = 'Something went wrong!';
+      toast('Something went wrong!', 'error');
     }
-    refreshPage();
-  });
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
 });
 
+// ################################################################################################################################
 // ## Cart ##
 const reduceQtyBtns = document.querySelectorAll(`.qty input[value="-"]`);
 const addQtyBtns = document.querySelectorAll(`.qty input[value="+"]`);

@@ -24,7 +24,7 @@
       <div class="right-container">
         <% if(data === null) { %>
         <button class="btn btn-primary" id="login"><b>Login</b></button>
-        <% } else if (data) { if(!data.hasOwnProperty('loginRequested')){ %>
+        <% } else if (typeof data === 'object' && typeof data.hasOwnProperty === 'function') { if(!data.hasOwnProperty('loginRequested')){ %>
         <button class="btn btn-primary dropdown-btn" id="account" data-dropdown="account-dropdown" aria-haspopup="true" aria-expanded="false" aria-label="discover">
           <i class="fa-solid fa-user acc-icon" aria-hidden="true"></i>
           <b class="acc-btn-title">My Account</b>

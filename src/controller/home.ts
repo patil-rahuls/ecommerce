@@ -15,6 +15,7 @@ class HomeController implements Controller {
     this.router.use(``, (req, res, next) => this.setPreSessionId(req, res, next));
     this.router.get(``, this.homePage);
     this.router.get(`/404`, this.pageNotFound);
+    this.router.get(`/500`, this.errorPage);
   }
 
   private async setPreSessionId(req: Request, res: Response, next: NextFunction) {
@@ -44,6 +45,14 @@ class HomeController implements Controller {
     const data = req.session?.user?.isAuthenticated ? req.session?.user : null;
     res.render('index', {
       layout: '404',
+      data
+    });
+  }
+
+  private async errorPage(req: Request, res: Response) {
+    const data = req.session?.user?.isAuthenticated ? req.session?.user : null;
+    res.render('index', {
+      layout: '500',
       data
     });
   }
