@@ -1,5 +1,7 @@
 import { Gender } from '../types.js';
 import { Address } from './address.js';
+import { Cart } from './cart.js';
+import { Product } from './product.js';
 
 interface User {
   id: number;
@@ -11,7 +13,8 @@ interface User {
   defaultBillingAddress?: number; // points to Address.id
   defaultShippingAddress?: number; // points to Address.id
   allAddresses?: Address[];
-  wishlist: any; // should be Product[] WIP
+  wishlist: Product[];
+  cart: Cart[];
   userGroup?: string;
   createdAt?: string;
   isAuthenticated: boolean;

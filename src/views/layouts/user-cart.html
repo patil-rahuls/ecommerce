@@ -1,74 +1,99 @@
 <main>
+  <% const cartItems = data?.cart; const totalItems = cartItems?.length; const orderTotal = cartItems?.reduce((acc, itm) => acc + Number(itm?.detail?.sellPrice)*Number(itm?.qty), 0); const totalShipping = cartItems?.reduce((acc, itm) => acc + Number(itm?.detail?.shipping)*Number(itm?.qty), 0); %>
   <h2>
-    MY CART
-    <span class="right">Order Total Rs. 12,999</span>
-    <span class="right">(5 Items)</span>
+    MY CART <% if(totalItems) { %>
+    <a href="#price-details" class="right orderTotal">Order Total ₹ <%= orderTotal+totalShipping %></a>
+    <b class="noOfItems">(<%= totalItems %>)</b>
+    <% } %>
   </h2>
   <div class="profileForm cart">
     <table>
       <tbody>
-        <!-- <tr>
-          <td>
-            <p>Nothing here yet...
-              <button class="continue-shopping btn btn-primary">
-                <a href="/">Continue Shopping...</a>
-              </button>
-            </p>
-          </td>
-        </tr> -->
-        <% for(const i of [1,2,3,4,5]) { %>
+        <% if(totalItems) { cartItems.forEach(itm => { %>
         <tr>
           <td class="cart-item">
             <a>
-              <img src="/loading.png" class="img-item" data-src="/product.jpeg" loading="lazy" />
+              <img src="/loading.png" class="img-item" data-src="<%= itm.detail.img %>" loading="lazy" />
             </a>
             <a>
-              <span class="product-title">Product Brand's Product Title WITH Product's salient features</span>
-              <span class="product-attr">Color: Red, Size: L</span>
+              <% if(itm.detail.title){ %>
+              <span class="product-title"><%= itm.detail.title %></span>
+              <% } if (itm.detail.attributes){ %>
+              <small class="product-attr"><%= itm.detail.attributes %></small>
+              <% } %>
             </a>
             <div class="price-container">
-              <h4 class="success discount">15% Off</h4>
-              <h4 class="actual-price">₹ 4,199</h4>
-              <h3 class="selling-price">₹ 2,999</h3>
-              <small class="delivery-date">Delivery by 24 Sep. 2024</small>
+              <% if(itm.detail.discount){ %>
+              <h4 class="success discount"><%= itm.detail.discount %> % Off</h4>
+              <% } if(itm.detail.mrp){ %>
+              <h4 class="actual-price">₹ <%= itm.detail.mrp %></h4>
+              <% } if(itm.detail.sellPrice){ %>
+              <h3 class="selling-price">₹ <%= itm.detail.sellPrice %></h3>
+              <% } if(itm.detail.expectedDeliveryDate){ %>
+              <small class="delivery-date">Delivery by <%= itm.detail.expectedDeliveryDate %></small>
+              <% } %>
             </div>
             <div class="qty-container">
-              <span><b>QUANTITY</b></span>
-              <div class="qty"><input type="button" value="-" /> <input type="text" class="qtyValue" value="1" /> <input type="button" value="+" /></div>
+              <div class="qty">
+                <input type="input" class="hide" hidden="true" name="productId" value="<%= itm.productId %>" />
+                <input class="decrQty" type="button" value="-" /> <input type="text" class="qtyValue" readonly="readonly" value="<%= itm.qty || itm.detail.moq %>" /> <input class="incrQty" type="button" value="+" />
+              </div>
             </div>
           </td>
           <td class="cart-item">
-            <input type="button" class="btn btn-primary" value="Wishlist" />
-            <input type="button" class="btn" value=" " />
-            <i class="fa fa-trash"></i>
+            <input type="input" class="hide" hidden="true" name="productId" value="<%= itm.productId %>" />
+            <input type="button" class="btn btn-primary add2wishlist" value="Wishlist" />
+            <input type="button" class="btn removeCartItem" value=" " />
+            <i class="fa fa-trash removeCartItem"></i>
           </td>
         </tr>
-        <% } %>
-        <tr>
+        <% }); %>
+        <tr id="price-details">
           <td class="cart-item price-details">
             <h4 class="product-title">Price Details</h4>
             <table>
               <tbody>
                 <tr>
-                  <td>Price (5 Items)</td>
-                  <td>Rs. 12,999</td>
+                  <td>Price (<%= totalItems %> Items)</td>
+                  <td>₹ <%= orderTotal %></td>
                 </tr>
                 <tr>
                   <td>Shipping</td>
-                  <td class="success">Free</td>
+                  <% if(totalShipping) { %>
+                  <td id="shippingCost">₹ <%= totalShipping %></td>
+                  <% } else { %>
+                  <td id="shippingCost" class="success">Free</td>
+                  <% } %>
                 </tr>
                 <tr>
                   <td><b>Amount Payable</b></td>
-                  <td><b>Rs 12,999</b></td>
+                  <td><b>₹ <%= orderTotal+totalShipping %></b></td>
                 </tr>
               </tbody>
             </table>
           </td>
         </tr>
+        <% } else { %>
+        <tr class="emptyCart">
+          <td>
+            <p>
+              Your Cart is Empty...
+              <button class="continue-shopping btn btn-primary">
+                <a href="/">Continue Shopping...</a>
+              </button>
+              <button class="continue-shopping btn btn-primary">
+                <a class="success" href="/user/wishlist">My Wishlist</a>
+              </button>
+            </p>
+          </td>
+        </tr>
+        <% } %>
       </tbody>
     </table>
   </div>
+  <% if(totalItems) { %>
   <div id="checkout-footer">
     <input type="button" value="PLACE ORDER" class="btn btn-checkout" />
   </div>
+  <% } %>
 </main>

@@ -25,22 +25,6 @@ class ProductMiddleware {
     }
   }
 
-  // Get only required attribute-values of a product. (For wishlist, cart, etc)
-  public async getProductDetailsByAttributes(pid, attributesArr) {
-    try {
-      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
-      await redisRead.connect();
-      const productDetails = await redisRead.hmGet(`PRODUCT:${pid}`, attributesArr);
-      await redisRead.quit();
-      return productDetails;
-    } catch (error) {
-      if (error instanceof BaseError) {
-        throw error;
-      }
-      throw new BaseError(`ERR_PRODUCT_WISHLIST`, error.message);
-    }
-  }
-
   //   Only for dev . Will remove once testing is done.
   public async getAllProducts(req: Request, res: Response, next: NextFunction) {
     try {
@@ -74,15 +58,20 @@ class ProductMiddleware {
       if (req.params.pid) {
         const redisWrite = REDIS_INSTANCE.init(process.env.REDIS_URL);
         await redisWrite.connect();
-        const productDetails = {
-          id: req.params.pid,
+        // Product
+        const productDetails: any = {
+          id: Number(req.params.pid),
           imgThumbnail: `/product.jpeg`,
           title: `Product Brand's Product Title WITH Product's salient features`,
-          rating: 2,
+          rating: 3,
           discountPercentage: `15`,
-          mrp: `1299`,
-          sellPrice: `1099`,
-          url: `/xyz-abc/pid/${req.params.pid}`
+          mrp: `1000`,
+
+          sellPrice: `999`,
+          url: `/xyz-abc/pid/${req.params.pid}`,
+          expectedDeliveryDate: `24 Sep. 2024`,
+          attributes: `Color: Grey, Battery Powered: Yes`,
+          moq: 1
         };
         const result = await redisWrite.hSet(`PRODUCT:${req.params.pid}`, productDetails); // Returns no. of values set in hmap
         await redisWrite.quit();
@@ -98,18 +87,45 @@ class ProductMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_SET_PRODUCT`, error.message));
+        next(new BaseError(`ERR_SET_PRODUCT_REDIS`, error.message));
       }
     }
   }
 
   // ## Redis Commands ## //
   private async getProductFromRedis(productKey) {
-    const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
-    await redisRead.connect();
-    const productDetails = await redisRead.hGetAll(productKey);
-    await redisRead.quit();
-    return productDetails;
+    try {
+      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisRead.connect();
+      const productDetails = await redisRead.hGetAll(productKey);
+      await redisRead.quit();
+      return productDetails;
+    } catch (error) {
+      if (error instanceof BaseError) {
+        throw error;
+      }
+      throw new BaseError(`ERR_GET_PRODUCT_REDIS`, error.message);
+    }
+  }
+
+  // ## Get only required attribute-values of a product. Returns Object. (For Wishlist, Cart etc.) ## //
+  public async getProductDetailsByAttributes(pid, attributesArr) {
+    try {
+      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisRead.connect();
+      const productDetails = await redisRead.hmGet(`PRODUCT:${pid}`, attributesArr);
+      await redisRead.quit();
+      const productDetailsObj: any = {};
+      attributesArr.forEach((field, i) => {
+        productDetailsObj[field] = productDetails[i];
+      });
+      return productDetailsObj;
+    } catch (error) {
+      if (error instanceof BaseError) {
+        throw error;
+      }
+      throw new BaseError(`ERR_GET_PRODUCT_REDIS_BY_ATTRIBUTES`, error.message);
+    }
   }
 }
 

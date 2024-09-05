@@ -48,8 +48,15 @@ class UserController implements Controller {
     // Remove Wishlist Item
     this.router.delete(`/wishlist`, AuthMiddleware.isAuthenticated, (req, res, next) => this.user.updateWishlist(req, res, next));
 
-    // Cart WIP
+    // Get Cart Products
     this.router.get(`/cart`, AuthMiddleware.isAuthenticated, DB.setInstance('READ'), (req, res, next) => this.user.cart(req, res, next));
+    // Add item to Cart / Increment Qty
+    this.router.post(`/cart`, AuthMiddleware.isAuthenticated, DB.setInstance('READ'), (req, res, next) => this.user.updateCart(req, res, next));
+    // Decrement Qty
+    this.router.put(`/cart`, AuthMiddleware.isAuthenticated, DB.setInstance('READ'), (req, res, next) => this.user.updateCart(req, res, next));
+    // Remove Cart Item
+    this.router.delete(`/cart`, AuthMiddleware.isAuthenticated, DB.setInstance('READ'), (req, res, next) => this.user.updateCart(req, res, next));
+
     // Orders WIP
     this.router.get(`/orders`, AuthMiddleware.isAuthenticated, DB.setInstance('READ'), (req, res, next) => this.user.orders(req, res, next));
   }

@@ -48,157 +48,171 @@ export const ERROR_CODES = {
   // USER
   ERR_USER_BLACKLISTED: {
     status: 403,
-    message: `User BLACKLISTED`
+    message: `User Login- User BLACKLISTED!`
   },
   ERR_USER_INCORRECT_PASSWORD: {
     status: 422,
-    message: `Incorrect password`,
+    message: `User Login- Incorrect password!`,
     userMessage: `Password is incorrect!`
   },
   ERR_USER_INCORRECT_OTP: {
     status: 422,
-    message: `Incorrect OTP`,
+    message: `User Login- Incorrect OTP!`,
     userMessage: `OTP is incorrect!`
   },
   ERR_USER_COULDNT_SAVE: {
     status: 500,
-    message: `Couldn't insert user into db`
+    message: `User- Couldn't insert user into db!`
   },
   ERR_USER_OTP_REQUESTED_TOO_SOON: {
     status: 422,
-    message: `OTP re-requested too soon by the user`
+    message: `User OTP- Re-requested too soon by the user!`
   },
   ERR_USER_OTP_COULDNT_SAVE: {
     status: 500,
-    message: `Couldn't save user OTP to redis`
+    message: `User OTP- Couldn't save user OTP to redis!`
   },
   ERR_USER_LOGOUT: {
     status: 500,
-    message: `Failed to logout user`,
-    userMessage: `Couldn't Logout user. Please try again!`
+    message: `User Logout- Failed!`,
+    userMessage: `Please try again!`
   },
 
   // USER Login
   ERR_USER_LOGINFORM: {
     status: 500,
-    message: `Login form could not be loaded`
+    message: `User Login- form could not be loaded!`
   },
   ERR_USER_LOGINFORM_UNAUTHORIZED: {
     status: 401,
-    message: `Login form attempted without authorization/preSessionId`
+    message: `User Login- Login form attempted without authorization/preSessionId!`
   },
   ERR_USER_LOGIN_ATTEMPT_UNAUTHORIZED: {
     status: 401,
-    message: `Login/otp attempted without preSessionId OR expired/missing CSRF token`
+    message: `User Login- attempted without preSessionId OR expired/missing CSRF token!`
   },
   ERR_USER_OTP_COULDNT_SEND: {
     status: 500,
-    message: `Couldn't send OTP. Code failure`
+    message: `User Login- Couldn't send OTP!`
   },
   ERR_USER_LOGIN: {
     status: 500,
-    message: `Login request could not be completed`
+    message: `User Login- request could not be completed!`
   },
   ERR_USER_NOT_AUTHENTICATED: {
     status: 401,
-    message: `Authentication required`,
+    message: `User Login- Authentication required!`,
     userMessage: `Please log-in first!`
   },
   ERR_USR_ALREADY_LOGGED_IN: {
     status: 400,
-    message: `User is already logged in`
+    message: `User Login- Already logged in!`
   },
 
   // USER - Profile
   ERR_USER_PROFILE_PAGE: {
     status: 500,
-    message: `Failed in Profile page`
+    message: `User Profile- Failed in Profile page!`
   },
   ERR_USER_PROFILE_UPDATE_FAILED: {
     status: 500,
-    message: `Could not save/update Profile info`,
+    message: `User Profile- Couldn't save/update Profile!`,
     userMessage: `Something went wrong!`
   },
   ERR_USER_PROFILE_UNAUTHORIZED_EDIT_ATTEMPT: {
     status: 401,
-    message: `Profile edit attempted without preSessionId OR expired/missing CSRF token`,
+    message: `User Profile- Edit attempted without preSessionId OR expired/missing CSRF token!`,
     userMessage: `Please try again!`
   },
 
   // USER - Address
   ERR_USER_ADDRESS_UPDATE_FAILED: {
     status: 500,
-    message: `Could not save/update user address`,
+    message: `User Address- Couldn't save/update User Address!`,
     userMessage: `Something went wrong!`
   },
   ERR_USER_ADDRESS_IN_USE_CANT_DELETE: {
     status: 400,
-    message: `Given address is a default shipping/billing address, hence can't be deleted`,
+    message: `User Address- Couldn't Delete User address because it is a Default Shipping/Billing Address!`,
     userMessage: `Can't remove default address!`
   },
   ERR_USER_ADDRESS_DELETE_FAILED: {
     status: 500,
-    message: `Could not delete user address`,
+    message: `User Address- Couldn't Delete User address!`,
     userMessage: `Something went wrong!`
   },
   ERR_USER_ADDRESS_NOT_EXISTS_CANT_SET_DEFAULT: {
     status: 500,
-    message: `Could not set address as default as the address doesn't exist.`,
+    message: `User Address- Doesn't exists. Couldn't set as default!`,
     userMessage: `Something went wrong!`
   },
 
   // USER - Wishlist
   ERR_USER_WISHLIST_PAGE: {
     status: 500,
-    message: `Failed in Profile page`
+    message: `User Wishlist- Failed in Profile page!`
   },
   ERR_USER_WISHLIST_UPDATE_FAILED: {
     status: 500,
-    message: `Could not update user wishlist.`
+    message: `User Wishlist- Couldn't update User Wishlist!`
   },
   ERR_USER_WISHLIST_UNAUTHORIZED_UPDATE_ATTEMPT: {
     status: 400,
-    message: `Wishlist update attempted without preSessionId OR expired/missing CSRF token`
+    message: `User Wishlist- Update attempted without preSessionId OR expired/missing CSRF token!`
+  },
+  ERR_PRODUCT_WISHLIST_DATA: {
+    status: 500,
+    message: `User Wishlist- Couldn't retrieve Wishlist Products from Redis!`
+  },
+
+  // USER - Cart
+  ERR_USER_CART_PAGE: {
+    status: 500,
+    message: `User Cart- Failed in cart page!`
   },
 
   // WIP Products
   ERR_ORDERS_PAGE: {
     status: 500,
-    message: `Failed in Orders page`
+    message: `User Orders- Failed in Orders page!`
   },
 
   // WIP PRODUCT
   ERR_PRODUCT_PAGE: {
     status: 500,
-    message: `Failed in Product page`
+    message: `Product- Failed in Product page!`
   },
-  ERR_SET_PRODUCT: {
+  ERR_GET_PRODUCT_REDIS: {
     status: 500,
-    message: `Failed in Set Product`
+    message: `Product- Couldn't get Product from Redis!`
   },
-  ERR_PRODUCT_WISHLIST_DATA: {
+  ERR_SET_PRODUCT_REDIS: {
     status: 500,
-    message: `Could not retrieve product data for wishlist`
+    message: `Product- Failed to Set Product into Redis!`
+  },
+  ERR_GET_PRODUCT_REDIS_BY_ATTRIBUTES: {
+    status: 500,
+    message: `Product- Failed to get Product by Attributes from Redis!`
   },
 
   // DB - MySQL
   ERR_DB_CONNECTION: {
     status: 503,
-    message: `Couldn't establish a connection with the database instance`
+    message: `Database- Couldn't establish connection with the Database Instance!`
   },
   ERR_DB_INSTANCE_NOT_FOUND: {
     status: 501,
-    message: `Database instance not found`
+    message: `Database- Instance not found!`
   },
   ERR_DB_STMT: {
     status: 500,
-    message: `Database query failed`
+    message: `Database- Query/Stmt failed!`
   },
 
   // DB - Redis
   ERR_REDIS_CONNECTION: {
     status: 503,
-    message: `REDIS- Couldn't establish a connection with the redis instance`
+    message: `REDIS- Couldn't establish a connection with the redis instance!`
   },
   ERR_REDIS_CONN_ATTEMPTS_EXCEEDED: {
     status: 503,
@@ -206,7 +220,7 @@ export const ERROR_CODES = {
   },
   ERR_REDIS_CMD: {
     status: 500,
-    message: `REDIS- Command failed.`
+    message: `REDIS- Command failed!`
   }
 };
 

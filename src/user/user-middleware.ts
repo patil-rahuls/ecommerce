@@ -316,13 +316,10 @@ class UserMiddleware {
     }
   }
 
-  // WIP
+  // Get Cart
   public async cart(req: Request, res: Response, next: NextFunction) {
     try {
-      // const dbConn = await DB.createConnection(res);
-      // const userCart = await this.getUserCart(dbConn, req.session.user.id);
-      // DB.releaseConnection(res);
-      // req.session.user.cart = userCart;
+      req.session.user.cart = await this.getUserCart(req.session.user.id);
       res.render('index', {
         layout: 'user-cart',
         data: req.session.user
@@ -332,7 +329,55 @@ class UserMiddleware {
       if (error instanceof BaseError) {
         next(error);
       } else {
-        next(new BaseError(`ERR_USER_WISHLIST_PAGE`, error.message));
+        next(new BaseError(`ERR_USER_CART_PAGE`, error.message));
+      }
+    }
+  }
+
+  // Add/Remove Cart Products
+  public async updateCart(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { productId = '' } = req.body;
+      let result;
+      switch (req.method) {
+        case 'DELETE':
+          // Delete all qty from cart
+          result = await this.editUserCart(req.session.user.id, productId, true);
+          break;
+        case 'PUT':
+          // Decrement the Qty
+          // If quantity(after decrementing) is less than moq, then delete it. Else decrement it.
+          const cartInfoInSession = req.session.user.cart.filter(itm => Number(itm.productId) === Number(productId))[0];
+          if (Number(cartInfoInSession.qty) - 1 < Number(cartInfoInSession.detail.moq)) {
+            // delete
+            result = await this.editUserCart(req.session.user.id, productId, true);
+          } else {
+            result = await this.editUserCart(req.session.user.id, productId, false, false);
+          }
+          break;
+        case 'POST':
+          // Add to cart/Increment Qty
+          result = await this.editUserCart(req.session.user.id, productId);
+          break;
+      }
+      // Get updated cart.
+      req.session.user.cart = await this.getUserCart(req.session.user.id);
+      const shipping = req.session.user.cart?.reduce((acc, itm) => acc + Number(itm?.detail?.shipping) * Number(itm?.qty), 0);
+      const orderTotal = req.session.user.cart?.reduce((acc, itm) => acc + Number(itm?.detail?.sellPrice) * Number(itm?.qty), 0);
+      // TODO: Apply Shopping cart rule.
+      // TODO: Send Updated User Cart to Queue to update MySQL DB.
+      res.json({
+        status: 200,
+        userMessage: result || `Please Try Again!`,
+        updatedCart: req.session.user.cart,
+        orderTotal,
+        shipping
+      });
+    } catch (error) {
+      if (error instanceof BaseError) {
+        next(error);
+      } else {
+        next(new BaseError(`ERR_USER_CART_PAGE`, error.message));
       }
     }
   }
@@ -509,14 +554,14 @@ class UserMiddleware {
         productIds.map(async pid => {
           const productData = await product.getProductDetailsByAttributes(pid, ['id', 'imgThumbnail', 'title', 'rating', 'discountPercentage', 'mrp', 'sellPrice', 'url']);
           return {
-            id: productData[0],
-            img: productData[1],
-            title: productData[2],
-            rating: productData[3] || 0,
-            discount: productData[4] && `${productData[4]}% Off`,
-            mrp: productData[5] && `₹ ${productData[5]}`,
-            sellPrice: productData[6] && `₹ ${productData[6]}`,
-            url: productData[7] && `${productData[7]}`
+            id: productData.id,
+            img: productData.imgThumbnail,
+            title: productData.title,
+            rating: productData.rating || 0,
+            discount: productData.discountPercentage && `${productData.discountPercentage}% Off`,
+            mrp: productData.mrp && `₹ ${productData.mrp}`,
+            sellPrice: productData.sellPrice && `₹ ${productData.sellPrice}`,
+            url: productData.url && `${productData.url}`
           };
         })
       );
@@ -537,6 +582,86 @@ class UserMiddleware {
         result = await redisWrite.sRem(`USR:WISHLIST:${userId}`, [productId]);
       } else {
         result = await redisWrite.sAdd(`USR:WISHLIST:${userId}`, productId);
+      }
+      await redisWrite.quit();
+      return result;
+    } catch (err) {
+      if (err instanceof BaseError) {
+        throw err;
+      } else {
+        throw new BaseError(`ERR_REDIS_CMD`, err.message);
+      }
+    }
+  }
+
+  private async getUserCart(userId) {
+    try {
+      const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisRead.connect();
+      // "USR:CART:<USER_ID>"= {pid1: qty1, pid2: qty2, pid3: qty3, ...}
+      const cartProducts = await redisRead.hGetAll(`USR:CART:${userId}`);
+      // Prepare cart data from "PRODUCT:<PID>"
+      const userCart = await Promise.all(
+        Object.keys(cartProducts).map(async pid => {
+          const productData = await product.getProductDetailsByAttributes(pid, ['id', 'imgThumbnail', 'title', 'discountPercentage', 'mrp', 'sellPrice', 'url', 'attributes', 'expectedDeliveryDate', 'moq', 'shippingCost']);
+          return {
+            productId: Number(productData.id),
+            qty: Number(cartProducts[pid]),
+            detail: {
+              id: Number(productData.id),
+              img: productData.imgThumbnail,
+              title: productData.title,
+              discount: productData.discountPercentage,
+              mrp: productData.mrp,
+              sellPrice: productData.sellPrice,
+              url: productData.url,
+              attributes: productData.attributes || '',
+              moq: Number(productData.moq) || 1,
+              expectedDeliveryDate: productData.expectedDeliveryDate,
+              shipping: productData.shippingCost || process.env.DEFAULT_SHIPPING_COST
+            }
+          };
+        })
+      );
+      await redisRead.quit();
+      return userCart;
+    } catch (err) {
+      throw new BaseError(`ERR_REDIS_CMD`, err.message);
+    }
+  }
+
+  private async editUserCart(userId, productId, del = false, set = true) {
+    try {
+      let result;
+      const redisWrite = REDIS_INSTANCE.init(process.env.REDIS_URL);
+      await redisWrite.connect();
+      if (del) {
+        result = await redisWrite.hDel(`USR:CART:${userId}`, productId);
+        if (Number(result) === 1) {
+          result = 'Item Removed !';
+        }
+      } else {
+        // del = false -> don't delete. Only add/increment/decrement based on 'set' parameter.
+        if (set) {
+          // Set product to cart OR Increment if exists.
+          // "hIncrBy" creates a new field if it doesn't exists and performs the incr. opeation.
+          result = await redisWrite.hIncrBy(`USR:CART:${userId}`, productId, 1);
+          result = 'Quantity Updated !';
+        } else {
+          // decrement qty
+          const productQty = await redisWrite.hGet(`USR:CART:${userId}`, productId);
+          // if qty is greater than 1, decrement it.
+          if (Number(productQty) > 1) {
+            result = await redisWrite.hIncrBy(`USR:CART:${userId}`, productId, -1);
+            result = 'Quantity Updated !';
+          } else {
+            // if qty becomes 0, remove the product from cart
+            result = await redisWrite.hDel(`USR:CART:${userId}`, productId);
+            if (Number(result) === 1) {
+              result = 'Item Removed !';
+            }
+          }
+        }
       }
       await redisWrite.quit();
       return result;

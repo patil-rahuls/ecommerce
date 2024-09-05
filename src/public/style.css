@@ -284,11 +284,11 @@ select {
   margin-left: 20px;
   font-size: large;
 }
-#layout main h2 span {
-  color: var(--fine-grey);
+#layout main h2 a {
+  color: var(--primary-color);
   margin-right: 10px !important;
   font-size: smaller;
-  font-weight: normal;
+  font-weight: bold;
   font-style: italic;
 }
 main {
@@ -746,15 +746,20 @@ main .add-address {
   min-width: 318px;
   max-width: 800px;
 }
+.profileForm.cart tr.emptyCart {
+  border: none;
+  box-shadow: none;
+  text-align: -webkit-center;
+}
 .profileForm .cart-item {
   display: flex;
   min-width: 342px;
   position: relative;
 }
-.profileForm .cart-item input[type='button']:nth-child(1) {
+.profileForm .cart-item input[type='button']:nth-child(2) {
   width: 128px;
 }
-.profileForm .cart-item input[type='button']:nth-child(2) {
+.profileForm .cart-item input[type='button']:nth-child(3) {
   width: 42px;
   margin-left: 9px;
 }

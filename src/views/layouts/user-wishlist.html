@@ -1,6 +1,6 @@
 <main>
   <% const wishlistItems = data?.wishlist; %>
-  <h2>MY WISHLIST <% if(wishlistItems?.length) { %> <span class="right"><%= wishlistItems.length %> Item(s)</span> <% } %></h2>
+  <h2>MY WISHLIST <% if(wishlistItems?.length) { %><b class="noOfItems">(<%= wishlistItems.length %>)</b> <% } %></h2>
   <div class="profileForm wishlist">
     <table>
       <tbody>
@@ -21,8 +21,8 @@
             <div class="wishlist-cta">
               <input type="input" class="hide" hidden="true" name="productId" value="<%= favItem.id %>" />
               <input type="button" class="btn btn-primary-solid add2cart" value="Add to Cart" />
-              <input type="button" class="btn removeItem" value=" " />
-              <i class="fa-solid fa-trash removeItem" aria-hidden="true"></i>
+              <input type="button" class="btn removeWishlistItem" value=" " />
+              <i class="fa-solid fa-trash removeWishlistItem" aria-hidden="true"></i>
             </div>
           </td>
           <% }); } else { %>

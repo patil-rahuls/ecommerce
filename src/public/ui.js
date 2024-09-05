@@ -801,8 +801,7 @@ saveAddrBtn?.addEventListener('click', async () => {
 
 // ################################################################################################################################
 // ## Wishlist ##
-// const addToWishlistBtns = document.getElementsByClassName('addToWishlist');
-// const removeFromWishlistBtns = document.getElementsByClassName(`removeItem`);
+const noOfItemsElem = document.querySelector(`.noOfItems`); // Applicable to both Cart page & Wishlist Page
 document.querySelector('body').addEventListener('click', async function (event) {
   // Add to Wishlist
   if (event.target.classList.contains('addToWishlist')) {
@@ -810,7 +809,7 @@ document.querySelector('body').addEventListener('click', async function (event) 
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
+      const productId = event.target.parentElement?.querySelector(`input[name="productId"]`)?.value;
       if (!productId || isNaN(productId)) {
         throw new Error();
       }
@@ -831,12 +830,12 @@ document.querySelector('body').addEventListener('click', async function (event) 
     hideElement(blurOverlay);
   }
   // Remove from wishlist
-  else if (event.target.classList.contains('removeItem')) {
+  else if (event.target.classList.contains('removeWishlistItem')) {
     showElement(loading);
     showElement(blurOverlay);
     try {
       const ct = getCookie('ct');
-      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
+      const productId = event.target.parentElement?.querySelector(`input[name="productId"]`)?.value;
       if (!productId || isNaN(productId)) {
         throw new Error();
       }
@@ -846,11 +845,14 @@ document.querySelector('body').addEventListener('click', async function (event) 
         case 200:
           toast(resp.userMessage, 'success');
           // Remove element from view.
-          event.target.parentElement.parentElement.remove();
-          if (Array.from(document.querySelectorAll('.wishlist tr td')).length <= 0) {
+          event.target.parentElement?.parentElement?.remove();
+          const noOfItems = Array.from(document.querySelectorAll('.wishlist tr td')).length;
+          noOfItemsElem.innerText = `(${noOfItems})`;
+          if (noOfItems <= 0) {
             const newCell = document.createElement('td');
             newCell.innerHTML = `<td><p>Nothing here yet...<button class="continue-shopping btn btn-primary"><a href="/">Continue Shopping...</a></button></p></td>`;
-            document.querySelector(`.wishlist tr`).appendChild(newCell);
+            document.querySelector(`.wishlist tr`)?.appendChild(newCell);
+            noOfItemsElem.innerText = '';
           }
           break;
         default:
@@ -867,47 +869,266 @@ document.querySelector('body').addEventListener('click', async function (event) 
 
 // ################################################################################################################################
 // ## Cart ##
-const reduceQtyBtns = document.querySelectorAll(`.qty input[value="-"]`);
-const addQtyBtns = document.querySelectorAll(`.qty input[value="+"]`);
-reduceQtyBtns?.forEach(reduceQtyBtn => {
-  reduceQtyBtn.addEventListener('click', function () {
-    const qtyElem = reduceQtyBtn.parentElement.querySelector('.qtyValue');
-    const discount = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
-    const actualPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
-    const sellingPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
-    const deliveryDate = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
-    qtyElem.value = Number(qtyElem.value) - 1;
-    if (qtyElem.value <= 0) {
-      qtyElem.value = 1;
-      reduceQtyBtn.disabled = true;
-    } else {
-      reduceQtyBtn.disabled = false;
+const cartItmCount = document.querySelector(`#cartItemCount`);
+const shippingCostElem = document.querySelector(`#shippingCost`);
+const orderTotalElem = document.querySelector(`.orderTotal`);
+const cartBody = document.querySelector(`.cart table tbody`);
+// const reduceQtyBtns = document.querySelectorAll(`.qty input[value="-"]`);
+// const addQtyBtns = document.querySelectorAll(`.qty input[value="+"]`);
+// reduceQtyBtns?.forEach(reduceQtyBtn => {
+//   reduceQtyBtn.addEventListener('click', function () {
+//     const qtyElem = reduceQtyBtn.parentElement.querySelector('.qtyValue');
+//     const discount = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
+//     const actualPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
+//     const sellingPrice = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
+//     const deliveryDate = reduceQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
+//     qtyElem.value = Number(qtyElem.value) - 1;
+//     if (qtyElem.value <= 0) {
+//       qtyElem.value = 1;
+//       reduceQtyBtn.disabled = true;
+//     } else {
+//       reduceQtyBtn.disabled = false;
+//     }
+//     // Send request to respective service to GET updated price.
+//     // We can't directly multiply price with qty because in actual ecommerce
+//     // there are certain rules, that apply to the sale of a particular product.
+//     // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
+//     // following implementation is totally wrong.
+//     // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
+//     // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
+//   });
+// });
+// addQtyBtns?.forEach(addQtyBtn => {
+//   addQtyBtn.addEventListener('click', function () {
+//     const qtyElem = addQtyBtn.parentElement.querySelector('.qtyValue');
+//     const discount = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
+//     const actualPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
+//     const sellingPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
+//     const deliveryDate = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
+//     qtyElem.value = Number(qtyElem.value) + 1;
+//     // Send request to respective service to GET updated price.
+//     // We can't directly multiply price with qty because in actual ecommerce
+//     // there are certain rules, that apply to the sale of a particular product.
+//     // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
+//     // following implementation is totally wrong.
+//     // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
+//     // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
+//   });
+// });
+const updateCartItmCount = (fn = 'add') => {
+  let count = Number(cartItmCount?.innerText) || 0;
+  if (fn === 'add') {
+    count++;
+  } else {
+    // Remove/Subtract Item
+    count = Math.max(0, count - 1);
+  }
+  cartItmCount.innerText = count;
+  return count;
+};
+const checkAndEmptyCart = () => {
+  const items = document.querySelectorAll('.cart > table > tbody > tr');
+  if (Array.from(items)?.length <= 1) {
+    // length 1 because last remaining item(tr element) is the price details tr element.
+    // cart is empty, remove/hide the price details section.
+    items?.[0].remove();
+    document.querySelector(`#checkout-footer`).remove();
+    const newCell = document.createElement('tr');
+    newCell.classList.add('emptyCart');
+    newCell.innerHTML = `<tr><td><p>Your Cart is Empty...<button class="continue-shopping btn btn-primary"><a href="/">Continue Shopping...</a></button><button class="continue-shopping btn btn-primary"><a class="success" href="/user/wishlist">My Wishlist</a></button></p></td></tr>`;
+    cartBody.appendChild(newCell);
+    noOfItemsElem.innerText = `(0)`;
+    orderTotalElem.innerText = ``;
+    hideElement(noOfItemsElem);
+    hideElement(orderTotalElem);
+  }
+};
+const updateCart = (data, orderTotal, shippingTotal) => {
+  // Update Cart IF USER IS ON CART PAGE.
+  if (window.location.href.includes('/cart')) {
+    if (data.length) {
+      cartBody.innerHTML = '';
+      noOfItemsElem.innerText = `(${data.length})`;
+      showElement(noOfItemsElem);
+      if (orderTotal) {
+        orderTotalElem.innerText = `Order Total ₹ ${orderTotal}`;
+        showElement(orderTotalElem);
+      }
+      data.forEach(itm => {
+        const tr = document.createElement('tr');
+        const productElem = document.createElement('td');
+        productElem.classList.add('cart-item');
+        productElem.innerHTML = `
+          <a>
+            <img class="img-item" src="${itm.detail.img}" loading="lazy" />
+          </a>`;
+        productElem.innerHTML += `
+          <a>
+            <span class="product-title">${itm.detail.title}</span>
+            <small class="product-attr">${itm.detail.attributes}</small>
+          </a>`;
+        productElem.innerHTML += `
+          <div class="price-container">
+            ${itm.detail.discount ? '<h4 class="success discount">' + itm.detail.discount + '% Off</h4>' : ''}
+            ${itm.detail.mrp ? '<h4 class="actual-price">₹ ' + itm.detail.mrp + '</h4>' : ''} 
+            ${itm.detail.sellPrice ? '<h3 class="selling-price">₹ ' + itm.detail.sellPrice + '</h3>' : ''}
+            ${itm.detail.expectedDeliveryDate ? '<small class="delivery-date">Delivery by ' + itm.detail.expectedDeliveryDate + '</small>' : ''}
+          </div>`;
+        productElem.innerHTML += `
+          <div class="qty-container">
+            <div class="qty">
+              <input type="input" class="hide" hidden="true" name="productId" value="${itm.productId}" />
+              <input class="decrQty" type="button" value="-" /> <input type="text" class="qtyValue" value="${itm.qty || itm.detail.moq}" /> <input class="incrQty" type="button" value="+" />
+            </div>
+          </div>`;
+        tr.appendChild(productElem);
+        const actionsElem = document.createElement('td');
+        actionsElem.classList.add('cart-item');
+        actionsElem.innerHTML += `
+          <td class="cart-item">
+            <input type="input" class="hide" hidden="true" name="productId" value="${itm.productId}" />
+            <input type="button" class="btn btn-primary add2wishlist" value="Wishlist" />
+            <input type="button" class="btn removeCartItem" value=" " />
+            <i class="fa fa-trash removeCartItem"></i>
+          </td>`;
+        tr.appendChild(actionsElem);
+        cartBody.appendChild(tr);
+      });
+      const totalTr = document.createElement('tr');
+      totalTr.id = 'price-details';
+      const priceDetailsElem = document.createElement('td');
+      priceDetailsElem.classList.add('cart-item');
+      priceDetailsElem.classList.add('price-details');
+      priceDetailsElem.innerHTML = `
+        <h4 class="product-title">Price Details</h4>
+        <table>
+          <tbody>
+            <tr>
+              <td>Price (${data.length} Items)</td>
+              <td>₹ ${orderTotal}</td>
+            </tr>
+            <tr>
+              <td>Shipping</td>
+              <td id="shippingCost" class="${shippingTotal ? '' : 'success'}" >${shippingTotal ? '₹ ' + shippingTotal : 'Free'}</td>
+            </tr>
+            <tr>
+              <td><b>Amount Payable</b></td>
+              <td><b>₹ ${orderTotal + shippingTotal}</b></td>
+            </tr>
+          </tbody>
+        </table>`;
+      totalTr.appendChild(priceDetailsElem);
+      cartBody.appendChild(totalTr);
     }
-    // Send request to respective service to GET updated price.
-    // We can't directly multiply price with qty because in actual ecommerce
-    // there are certain rules, that apply to the sale of a particular product.
-    // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
-    // following implementation is totally wrong.
-    // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
-    // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
-  });
-});
-addQtyBtns?.forEach(addQtyBtn => {
-  addQtyBtn.addEventListener('click', function () {
-    const qtyElem = addQtyBtn.parentElement.querySelector('.qtyValue');
-    const discount = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.discount');
-    const actualPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.actual-price');
-    const sellingPrice = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.selling-price');
-    const deliveryDate = addQtyBtn.parentElement.parentElement.previousElementSibling.querySelector('.delivery-date');
-    qtyElem.value = Number(qtyElem.value) + 1;
-    // Send request to respective service to GET updated price.
-    // We can't directly multiply price with qty because in actual ecommerce
-    // there are certain rules, that apply to the sale of a particular product.
-    // like if qty is 3, give more discount, if qty is 1 charge shipping fees etc.
-    // following implementation is totally wrong.
-    // actualPrice.innerText = formatAmount(getAmountFromString(actualPrice.innerText) * Number(qtyElem.value));
-    // sellingPrice.innerText = formatAmount(getAmountFromString(sellingPrice.value) * Number(qtyElem.value));
-  });
+  }
+};
+document.querySelector('body').addEventListener('click', async function (event) {
+  // Add to Cart - From Wishlist & Product Details Page.
+  if (event.target.classList.contains('add2cart') || (event.target.classList.contains('incrQty') && event.target.value === '+')) {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
+      if (!productId || isNaN(productId)) {
+        throw new Error();
+      }
+      const payload = { productId, ct };
+      const resp = await fetchData('/user/cart', 'POST', payload);
+      switch (resp.status) {
+        case 200:
+          if (event.target.classList.contains('add2cart')) {
+            resp.userMessage = 'Added to Cart!';
+          }
+          toast(resp.userMessage, 'success');
+          // Update cart item count in the header icon.
+          if (event.target.classList.contains('incrQty') && event.target.value === '+') {
+            // Its a Increment in Qty, Don't update count in header icon.
+          } else {
+            updateCartItmCount();
+          }
+          // Update the cart.
+          updateCart(resp.updatedCart, resp.orderTotal, resp.shipping);
+          break;
+        default:
+          toast(resp.userMessage, 'error');
+          break;
+      }
+    } catch (err) {
+      toast('Something went wrong!', 'error');
+    }
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+  // Remove Item from Cart.
+  else if (event.target.classList.contains('removeCartItem')) {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
+      if (!productId || isNaN(productId)) {
+        throw new Error();
+      }
+      const payload = { productId, ct };
+      const resp = await fetchData('/user/cart', 'DELETE', payload);
+      switch (resp.status) {
+        case 200:
+          toast(resp.userMessage, 'success');
+          // Update cart item count in the header icon.
+          updateCartItmCount('remove');
+          // Remove item from cart view
+          event.target.parentElement.parentElement.remove();
+          checkAndEmptyCart();
+          // Update the cart.
+          updateCart(resp.updatedCart, resp.orderTotal, resp.shipping);
+          break;
+        default:
+          toast(resp.userMessage, 'error');
+          break;
+      }
+    } catch (err) {
+      toast('Something went wrong!', 'error');
+    }
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
+  // Decrement qty
+  else if (event.target.classList.contains('decrQty') && event.target.value === '-') {
+    showElement(loading);
+    showElement(blurOverlay);
+    try {
+      const ct = getCookie('ct');
+      const productId = event.target.parentElement.querySelector(`input[name="productId"]`).value;
+      if (!productId || isNaN(productId)) {
+        throw new Error();
+      }
+      const payload = { productId, ct };
+      const resp = await fetchData('/user/cart', 'PUT', payload);
+      switch (resp.status) {
+        case 200:
+          toast(resp.userMessage, 'success');
+          // Update cart item count in the header icon.
+          if (resp.userMessage === 'Item Removed !') {
+            // Decrement resulted in 0 Qty, hence remove the item from cart.
+            updateCartItmCount('remove');
+            // Remove item from cart view
+            event.target.parentElement.parentElement.remove();
+            checkAndEmptyCart();
+          }
+          // Update the cart.
+          updateCart(resp.updatedCart, resp.orderTotal, resp.shipping);
+          break;
+        default:
+          toast(resp.userMessage, 'error');
+          break;
+      }
+    } catch (err) {
+      toast('Something went wrong!', 'error');
+    }
+    hideElement(loading);
+    hideElement(blurOverlay);
+  }
 });
 
 // ################################################################################################################################
