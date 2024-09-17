@@ -978,7 +978,7 @@ const updateCart = (data, orderTotal, shippingTotal) => {
           <div class="qty-container">
             <div class="qty">
               <input type="input" class="hide" hidden="true" name="productId" value="${itm.productId}" />
-              <input class="decrQty" type="button" value="-" /> <input type="text" class="qtyValue" value="${itm.qty || itm.detail.moq}" /> <input class="incrQty" type="button" value="+" />
+              <input class="decrQty" type="button" value="-" /> <input type="text" readonly="readonly" class="qtyValue" value="${itm.qty || itm.detail.moq}" /> <input class="incrQty" type="button" value="+" />
             </div>
           </div>`;
         tr.appendChild(productElem);
@@ -1044,8 +1044,9 @@ document.querySelector('body').addEventListener('click', async function (event) 
           // Update cart item count in the header icon.
           if (event.target.classList.contains('incrQty') && event.target.value === '+') {
             // Its a Increment in Qty, Don't update count in header icon.
-          } else {
-            updateCartItmCount();
+          }
+          if (resp.cartItemCount) {
+            cartItemCount.innerText = resp.cartItemCount;
           }
           // Update the cart.
           updateCart(resp.updatedCart, resp.orderTotal, resp.shipping);
@@ -1113,7 +1114,7 @@ document.querySelector('body').addEventListener('click', async function (event) 
             // Decrement resulted in 0 Qty, hence remove the item from cart.
             updateCartItmCount('remove');
             // Remove item from cart view
-            event.target.parentElement.parentElement.remove();
+            event.target.parentElement.parentElement.parentElement.parentElement.remove();
             checkAndEmptyCart();
           }
           // Update the cart.

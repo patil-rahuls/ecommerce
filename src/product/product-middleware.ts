@@ -8,7 +8,22 @@ class ProductMiddleware {
   public async getProduct(req: Request, res: Response, next: NextFunction) {
     try {
       if (req.params?.ptitle && req.params?.pid) {
-        const productDetails = await this.getProductFromRedis(`PRODUCT:${req.params.pid}`);
+        // const productDetails = await this.getProductFromRedis(`PRODUCT:${req.params.pid}`);
+        const productDetails: any = {
+          id: Number(req.params.pid),
+          imgThumbnail: `/product.jpeg`,
+          title: `Product Brand's Product Title WITH Product's salient features`,
+          rating: 3,
+          discountPercentage: `15`,
+          mrp: `1000`,
+          sellPrice: `999`,
+          url: `/xyz-abc/pid/${req.params.pid}`,
+          expectedDeliveryDate: `24 Sep. 2024`,
+          attributes: `Color: Grey, Battery Powered: Yes`,
+          moq: 2,
+          qtyLimit: 3, // should be > moq
+          shipping: 199
+        };
         res.render('index', {
           layout: 'product',
           data: productDetails
@@ -25,7 +40,7 @@ class ProductMiddleware {
     }
   }
 
-  //   Only for dev . Will remove once testing is done.
+  // WIP  Only for dev . Will remove once testing is done.
   public async getAllProducts(req: Request, res: Response, next: NextFunction) {
     try {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
@@ -66,12 +81,13 @@ class ProductMiddleware {
           rating: 3,
           discountPercentage: `15`,
           mrp: `1000`,
-
           sellPrice: `999`,
           url: `/xyz-abc/pid/${req.params.pid}`,
           expectedDeliveryDate: `24 Sep. 2024`,
           attributes: `Color: Grey, Battery Powered: Yes`,
-          moq: 1
+          moq: 2,
+          qtyLimit: 3, // should be > moq
+          shipping: 199
         };
         const result = await redisWrite.hSet(`PRODUCT:${req.params.pid}`, productDetails); // Returns no. of values set in hmap
         await redisWrite.quit();

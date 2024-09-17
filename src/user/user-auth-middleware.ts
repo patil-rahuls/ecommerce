@@ -2,12 +2,14 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
 import { BaseError } from '../middlewares/error-middleware.js';
+import { UserMiddleware } from './user-middleware.js';
 import { DB } from '../middlewares/db.js';
 import { CookieHelper } from '../common/cookie-helper.js';
 import { InputValidator } from '../common/input-validator.js';
 import { SMSAuth } from '../common/sms-auth.js';
 import { User } from '../common/interfaces/user.js';
 
+const userObj = new UserMiddleware();
 class AuthMiddleware {
   static readonly ACCESS_TOKEN_EXPIRY = 1 * 60 * 1000;
   static readonly REFRESH_TOKEN_EXPIRY = 10 * 24 * 60 * 60 * 1000;
@@ -154,6 +156,8 @@ class AuthMiddleware {
     // Login and set user session.
     req.session.user = <User>usrDataForSession;
     req.session.user.isAuthenticated = true;
+    // Add cart data to session.
+    req.session.user.cart = await userObj.getUserCart(req.session.user.id);
     // Generate JWTs
     // Access Token
     const at = await AuthMiddleware.getToken(`ACCESS_ID-${req.session.user.mobile}`);

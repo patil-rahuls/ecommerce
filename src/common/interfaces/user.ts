@@ -15,6 +15,7 @@ interface User {
   allAddresses?: Address[];
   wishlist: Product[];
   cart: Cart[];
+  orders: any; // WIP
   userGroup?: string;
   createdAt?: string;
   isAuthenticated: boolean;

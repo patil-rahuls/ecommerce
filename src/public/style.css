@@ -18,6 +18,8 @@
   --primary-color: #4285f4;
   --loading-color: darkorange;
   --success: #34a853;
+  --success-bg: #e6ffe6;
+  --warn-bg: #ffedcc;
   --fail: crimson;
   --light: white;
   --border: 1px solid var(--light-grey);
@@ -258,20 +260,24 @@ select {
   height: 42px;
 }
 .tag {
-  color: var(--light) !important;
-  padding: 8px;
+  color: var(--light);
   border-radius: 6px;
   font-weight: bold;
   letter-spacing: 0.8px;
 }
 .tag.success {
-  background-color: var(--success) !important;
+  color: var(--success) !important;
+  background-color: var(--success-bg) !important;
+  padding: 12px !important;
 }
 .tag.warn {
-  background-color: var(--loading-color) !important;
+  color: var(--loading-color) !important;
+  background-color: var(--warn-bg) !important;
+  padding: 12px !important;
 }
 .tag.cancel {
-  background-color: var(--medium-grey) !important;
+  background-color: lightgrey !important;
+  padding: 12px !important;
 }
 
 /* Layout */
@@ -809,6 +815,7 @@ main .add-address {
   height: 42px !important;
   border-radius: 20px;
   margin: 0 4px;
+  text-align: center;
 }
 /* qty value */
 .profileForm .cart-item .qty input:nth-child(2) {

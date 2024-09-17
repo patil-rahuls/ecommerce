@@ -10,7 +10,8 @@ interface Product {
   rating?: number;
   isArchived?: boolean;
   attributes?: any;
-  moq?: number;
+  moq?: number; // Minimum Order Quantity
+  qtyLimit?: number; // Maximum Order Quantity
   shipping?: number;
 }
 

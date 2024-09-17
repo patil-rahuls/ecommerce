@@ -7,7 +7,7 @@ import { ProductMiddleware } from '../product/product-middleware.js';
 
 const product = new ProductMiddleware();
 class UserMiddleware {
-  // Profile Page
+  // Get User Profile Page
   public async profile(req: Request, res: Response, next: NextFunction) {
     try {
       const dbConn = await DB.createConnection(res);
@@ -28,7 +28,7 @@ class UserMiddleware {
     }
   }
 
-  // Edit Profile Details
+  // Edit User Profile Details
   public async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const validationErrors: any = {};
@@ -117,7 +117,7 @@ class UserMiddleware {
     }
   }
 
-  // Edit Address
+  // Edit User Address
   public async updateAddress(req: Request, res: Response, next: NextFunction) {
     try {
       const validationErrors: any = {};
@@ -210,7 +210,7 @@ class UserMiddleware {
     }
   }
 
-  // Delete Address
+  // Delete User Address
   public async deleteAddress(req: Request, res: Response, next: NextFunction) {
     try {
       const { id = '' } = req.body;
@@ -241,7 +241,7 @@ class UserMiddleware {
     }
   }
 
-  // Set Address as Default
+  // Set User Address as Default
   public async setDefaultAddress(req: Request, res: Response, next: NextFunction) {
     try {
       const { id = '' } = req.body;
@@ -272,7 +272,7 @@ class UserMiddleware {
     }
   }
 
-  // Get Wishlist
+  // Get User Wishlist
   public async wishlist(req: Request, res: Response, next: NextFunction) {
     try {
       req.session.user.wishlist = await this.getUserWishlist(req.session.user.id);
@@ -290,7 +290,7 @@ class UserMiddleware {
     }
   }
 
-  // Add/Remove Wishlist Products
+  // Add/Remove User Wishlist Products
   public async updateWishlist(req: Request, res: Response, next: NextFunction) {
     try {
       const { productId = '' } = req.body;
@@ -316,7 +316,7 @@ class UserMiddleware {
     }
   }
 
-  // Get Cart
+  // Get User Cart
   public async cart(req: Request, res: Response, next: NextFunction) {
     try {
       req.session.user.cart = await this.getUserCart(req.session.user.id);
@@ -334,36 +334,59 @@ class UserMiddleware {
     }
   }
 
-  // Add/Remove Cart Products
+  // Add/Remove User Cart Products
   public async updateCart(req: Request, res: Response, next: NextFunction) {
     try {
       const { productId = '' } = req.body;
       let result;
+      req.session.user.cart = await this.getUserCart(req.session.user.id);
+      const cartInfoInSession = req.session.user.cart?.filter(itm => Number(itm.productId) === Number(productId))?.[0];
       switch (req.method) {
         case 'DELETE':
           // Delete all qty from cart
-          result = await this.editUserCart(req.session.user.id, productId, true);
+          result = await this.editUserCart(req.session.user.id, productId, 0);
           break;
         case 'PUT':
           // Decrement the Qty
-          // If quantity(after decrementing) is less than moq, then delete it. Else decrement it.
-          const cartInfoInSession = req.session.user.cart.filter(itm => Number(itm.productId) === Number(productId))[0];
-          if (Number(cartInfoInSession.qty) - 1 < Number(cartInfoInSession.detail.moq)) {
-            // delete
-            result = await this.editUserCart(req.session.user.id, productId, true);
-          } else {
-            result = await this.editUserCart(req.session.user.id, productId, false, false);
+          if (cartInfoInSession) {
+            // If quantity(if decremented) is less than moq OR 1, then delete it. Else decrement it.
+            if (Number(cartInfoInSession?.qty) - 1 < Number(cartInfoInSession?.detail?.moq) || Number(cartInfoInSession?.qty) - 1 < 1) {
+              // delete
+              result = await this.editUserCart(req.session.user.id, productId, 0);
+            } else if (Number(cartInfoInSession?.qty) > 1) {
+              // Decrement by 1
+              result = await this.editUserCart(req.session.user.id, productId, -1);
+            } else {
+              // If qty becomes 0, remove the product from cart
+              result = await this.editUserCart(req.session.user.id, productId, 0);
+            }
           }
           break;
         case 'POST':
-          // Add to cart/Increment Qty
-          result = await this.editUserCart(req.session.user.id, productId);
+          // Add MOQ to cart/Increment Qty
+          if (cartInfoInSession) {
+            // Check for Max Quantity Limit
+            if (cartInfoInSession?.qty && Number(cartInfoInSession.qty) + 1 > Number(cartInfoInSession.detail?.qtyLimit)) {
+              throw new BaseError(`ERR_USER_CART_ORDER_QUANTITY_LIMITED`);
+            } else {
+              result = await this.editUserCart(req.session.user.id, productId, 1);
+            }
+          }
+          // Add MOQ to cart if adding to cart, else increment qty by 1
+          else if (!cartInfoInSession?.qty) {
+            // Get product's MOQ
+            const { moq = 1 } = await product.getProductDetailsByAttributes(productId, ['moq']);
+            result = await this.editUserCart(req.session.user.id, productId, moq);
+          } else {
+            result = await this.editUserCart(req.session.user.id, productId, 1);
+          }
           break;
       }
       // Get updated cart.
       req.session.user.cart = await this.getUserCart(req.session.user.id);
       const shipping = req.session.user.cart?.reduce((acc, itm) => acc + Number(itm?.detail?.shipping) * Number(itm?.qty), 0);
       const orderTotal = req.session.user.cart?.reduce((acc, itm) => acc + Number(itm?.detail?.sellPrice) * Number(itm?.qty), 0);
+      const cartItemCount = req.session.user.cart?.length;
       // TODO: Apply Shopping cart rule.
       // TODO: Send Updated User Cart to Queue to update MySQL DB.
       res.json({
@@ -371,7 +394,8 @@ class UserMiddleware {
         userMessage: result || `Please Try Again!`,
         updatedCart: req.session.user.cart,
         orderTotal,
-        shipping
+        shipping,
+        ...(cartItemCount && { cartItemCount })
       });
     } catch (error) {
       if (error instanceof BaseError) {
@@ -382,13 +406,12 @@ class UserMiddleware {
     }
   }
 
-  // WIP
+  // Get User Orders
   public async orders(req: Request, res: Response, next: NextFunction) {
     try {
-      // const dbConn = await DB.createConnection(res);
-      // const userOrders = await this.getUserOrders(dbConn, req.session.user.id);
-      // DB.releaseConnection(res);
-      // req.session.user.orders = userOrders;
+      const dbConn = await DB.createConnection(res);
+      req.session.user.orders = await this.getUserOrders(dbConn, req.session.user.id);
+      DB.releaseConnection(res);
       res.render('index', {
         layout: 'user-orders',
         data: req.session.user
@@ -594,7 +617,7 @@ class UserMiddleware {
     }
   }
 
-  private async getUserCart(userId) {
+  public async getUserCart(userId) {
     try {
       const redisRead = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisRead.connect();
@@ -603,7 +626,7 @@ class UserMiddleware {
       // Prepare cart data from "PRODUCT:<PID>"
       const userCart = await Promise.all(
         Object.keys(cartProducts).map(async pid => {
-          const productData = await product.getProductDetailsByAttributes(pid, ['id', 'imgThumbnail', 'title', 'discountPercentage', 'mrp', 'sellPrice', 'url', 'attributes', 'expectedDeliveryDate', 'moq', 'shippingCost']);
+          const productData = await product.getProductDetailsByAttributes(pid, ['id', 'imgThumbnail', 'title', 'discountPercentage', 'mrp', 'sellPrice', 'url', 'attributes', 'expectedDeliveryDate', 'moq', 'qtyLimit', 'shippingCost']);
           return {
             productId: Number(productData.id),
             qty: Number(cartProducts[pid]),
@@ -617,6 +640,7 @@ class UserMiddleware {
               url: productData.url,
               attributes: productData.attributes || '',
               moq: Number(productData.moq) || 1,
+              qtyLimit: Number(productData.qtyLimit) || 10,
               expectedDeliveryDate: productData.expectedDeliveryDate,
               shipping: productData.shippingCost || process.env.DEFAULT_SHIPPING_COST
             }
@@ -630,38 +654,28 @@ class UserMiddleware {
     }
   }
 
-  private async editUserCart(userId, productId, del = false, set = true) {
+  private async editUserCart(userId, productId, setQty = 1) {
     try {
       let result;
       const redisWrite = REDIS_INSTANCE.init(process.env.REDIS_URL);
       await redisWrite.connect();
-      if (del) {
-        result = await redisWrite.hDel(`USR:CART:${userId}`, productId);
-        if (Number(result) === 1) {
-          result = 'Item Removed !';
-        }
-      } else {
-        // del = false -> don't delete. Only add/increment/decrement based on 'set' parameter.
-        if (set) {
-          // Set product to cart OR Increment if exists.
-          // "hIncrBy" creates a new field if it doesn't exists and performs the incr. opeation.
-          result = await redisWrite.hIncrBy(`USR:CART:${userId}`, productId, 1);
-          result = 'Quantity Updated !';
-        } else {
-          // decrement qty
-          const productQty = await redisWrite.hGet(`USR:CART:${userId}`, productId);
-          // if qty is greater than 1, decrement it.
-          if (Number(productQty) > 1) {
-            result = await redisWrite.hIncrBy(`USR:CART:${userId}`, productId, -1);
-            result = 'Quantity Updated !';
-          } else {
-            // if qty becomes 0, remove the product from cart
-            result = await redisWrite.hDel(`USR:CART:${userId}`, productId);
-            if (Number(result) === 1) {
-              result = 'Item Removed !';
-            }
+      switch (setQty) {
+        case 0:
+          // DELETE
+          result = await redisWrite.hDel(`USR:CART:${userId}`, productId);
+          if (Number(result) === 1) {
+            result = 'Item Removed!';
           }
-        }
+          break;
+        case 1: // Increment by 1
+        case -1: // Decrement by 1
+        default:
+          // "hIncrBy" creates a new field if it doesn't exists and performs the incr. opeation.
+          result = await redisWrite.hIncrBy(`USR:CART:${userId}`, productId, setQty); // Returns updatged Qty.
+          if (typeof result === 'number') {
+            result = 'Cart Updated!';
+          }
+          break;
       }
       await redisWrite.quit();
       return result;
@@ -671,6 +685,17 @@ class UserMiddleware {
       } else {
         throw new BaseError(`ERR_REDIS_CMD`, err.message);
       }
+    }
+  }
+
+  // WIP
+  private async getUserOrders(dbConn, userId) {
+    try {
+      const rows = await dbConn.execute('SELECT id, name, mobile, pincode, address_text AS addressText, address_type AS addressType FROM `orders` WHERE `user_id` = ?;', [userId]);
+      console.log(JSON.stringify(rows));
+      return rows;
+    } catch (err) {
+      throw new BaseError(`ERR_DB_STMT`, err.message);
     }
   }
 }

@@ -170,6 +170,11 @@ export const ERROR_CODES = {
     status: 500,
     message: `User Cart- Failed in cart page!`
   },
+  ERR_USER_CART_ORDER_QUANTITY_LIMITED: {
+    status: 400,
+    message: `User Cart- Maximum Order Quantity Limited!`,
+    userMessage: `Sorry! Limited Quantity per Order!`
+  },
 
   // WIP Products
   ERR_ORDERS_PAGE: {

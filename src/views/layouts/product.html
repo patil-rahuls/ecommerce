@@ -1,7 +1,9 @@
 <main>
   <% if(data) { %>
-  <p><%= JSON.stringify(data) %></p>
   <input type="input" class="hide" hidden="true" name="productId" value="<%= data.id %>" />
+
+  <!-- <p><%= JSON.stringify(data) %></p> -->
   <input type="button" class="btn btn-primary-solid addToWishlist" value="Add to Wishlist" />
+  <input type="button" class="btn btn-primary-solid add2cart" value="Add to Cart" />
   <% } %>
 </main>
