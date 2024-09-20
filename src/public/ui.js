@@ -760,7 +760,7 @@ saveAddrBtn?.addEventListener('click', async () => {
               addrDivToUpdate.parentElement?.scrollIntoView();
             } else {
               // Add
-              const lastAddrTd = Array.from(allAddresses).slice(-1)[0];
+              let lastAddrTd = Array.from(allAddresses).slice(-1)[0];
               const newAddressElem = `
               <td class="address glow">
                 <div>
@@ -778,8 +778,18 @@ saveAddrBtn?.addEventListener('click', async () => {
                 <a class="defAddr">Set as Default</a>
                 <a class="delAddr">Remove</a>
               </td>`;
-              lastAddrTd?.insertAdjacentHTML('afterend', newAddressElem);
-              lastAddrTd.scrollIntoView();
+              if (lastAddrTd) {
+                lastAddrTd?.insertAdjacentHTML('afterend', newAddressElem);
+                lastAddrTd.scrollIntoView();
+              } else {
+                const addrTable = document.querySelector(`.address-cards tbody tr`);
+                addrTable.querySelector('td').remove();
+                const newAddrTd = document.createElement('td');
+                newAddrTd.innerHTML = newAddressElem;
+                newAddrTd.classList.add('address');
+                newAddrTd.classList.add('glow');
+                addrTable.appendChild(newAddrTd);
+              }
             }
             clearAddrForm();
             toast(resp.userMessage, 'success');

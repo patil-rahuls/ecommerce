@@ -7,10 +7,11 @@
   "scripts": {
     "clean": "rimraf dist",
     "copy-views": "copyfiles -u 1 ./src/views/**/* ./dist",
+    "copy-index": "copyfiles -u 1 ./src/views/index.html ./dist",
     "copy-public": "copyfiles -u 1 ./src/public/**/* ./dist",
     "build:tsc": "tsc",
     "build:watch": "tsc --watch",
-    "build": "npm run clean && npm run build:tsc && npm run copy-views && npm run copy-public",
+    "build": "npm run clean && npm run build:tsc && npm run copy-views && npm run copy-public && npm run copy-index",
     "start": "npm run build && set NODE_ENV=production && node dist/server.js",
     "start:dev": "npm run build && set NODE_ENV=development && node dist/server.js",
     "lint-staged": "lint-staged",
