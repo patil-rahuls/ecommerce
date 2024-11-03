@@ -722,6 +722,7 @@ main .add-address {
   position: relative;
   margin-left: -36px;
   align-content: center;
+  display: grid;
   color: var(--fine-grey);
 }
 .profileForm .wishlist-item .actual-price {
@@ -997,7 +998,7 @@ main .add-address {
   }
   #meta .search {
     display: flex;
-    margin-left: -42px;
+    /* margin-left: -42px; */
   }
   #meta .search input {
     width: 118vw;
