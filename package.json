@@ -4,6 +4,7 @@
   "type": "module",
   "description": "An open source, production-ready ecommerce platform that focuses on real world scenarios. It comes with all the essential e-commerce features and is highly customizable.",
   "main": "dist/app.js",
+  "ENVIRONMENT": "development",
   "scripts": {
     "clean": "rimraf dist",
     "copy-views": "copyfiles -u 1 ./src/views/**/* ./dist",
@@ -12,8 +13,8 @@
     "build:tsc": "tsc",
     "build:watch": "tsc --watch",
     "build": "npm run clean && npm run build:tsc && npm run copy-views && npm run copy-public && npm run copy-index",
-    "start": "npm run build && set NODE_ENV=production && node dist/server.js",
-    "start:dev": "npm run build && set NODE_ENV=development && node dist/server.js",
+    "start": "npm run build && set NODE_ENV=$npm_package_ENVIRONMENT && node dist/server.js",
+    "startc": "set NODE_ENV=$npm_package_ENVIRONMENT && node dist/server.js",
     "lint-staged": "lint-staged",
     "prettier:fix": "prettier --ignore-path .prettierignore --write src",
     "lint": "eslint ./src/ --cache --ext .ts",

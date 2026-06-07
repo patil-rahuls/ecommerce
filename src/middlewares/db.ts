@@ -1,8 +1,8 @@
 import '../config/dotenv.js';
-import db, { Pool } from 'mysql2/promise';
+import db, { Pool } from 'mysql2/promise.js';
 import { NextFunction, Request, Response } from 'express';
 import { DBInstance, DB_INSTANCE_ARR } from '../common/types.js';
-import { LOGGER } from '../middlewares/logger.js';
+import { LOGGER } from './logger.js';
 import { BaseError } from './error-middleware.js';
 
 abstract class DB {

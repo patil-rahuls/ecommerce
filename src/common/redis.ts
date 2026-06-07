@@ -6,7 +6,7 @@ class Redis {
   private static instance: Redis;
   private static client: RedisClientType;
 
-  private constructor() {}
+  // private constructor() {}
 
   public init(url: string) {
     Redis.client = createClient({
@@ -25,10 +25,10 @@ class Redis {
       }
     });
 
-    Redis.client.on('error', err => {
+    Redis.client.on('error', () => {
       Redis.client.quit();
       LOGGER.ERROR('REDIS-Connection error.');
-      throw new BaseError('ERR_REDIS_CONNECTION', err.message);
+      // throw new BaseError('ERR_REDIS_CONNECTION', err.message);
     });
     Redis.client.on('ready', () => {
       LOGGER.INFO('REDIS-Ready.');

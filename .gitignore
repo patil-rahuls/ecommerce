@@ -7,7 +7,6 @@ node_modules
 .husky/*
 !.husky/pre-commit
 .eslintcache
-._eslint.config.js
 
 # Environment & configs
 package-lock.json
@@ -15,4 +14,3 @@ package-lock.json
 
 # Personal notes
 Docs/
-notes.txt

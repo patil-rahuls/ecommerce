@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ERROR_CODES, GENERIC_ERR_STR } from '../common/error-codes.js';
-import { LOGGER } from '../middlewares/logger.js';
+import { LOGGER } from './logger.js';
 import { DB } from './db.js';
 
 class BaseError extends Error {
